@@ -20,9 +20,13 @@ export const parseExcelFile = (file) => {
         // Map to our database schema
         const students = rawData.map((row, index) => {
           // Fallbacks for standard column names
-          const name = row['Name of St'] || row['Name of Student'] || row['Student Name'] || `Student ${index + 1}`;
+          const name = row['Name of Student'] || row['Name of St'] || row['Student Name'] || `Student ${index + 1}`;
           
-          const classStr = row['Class of Stu'] !== undefined ? String(row['Class of Stu']).trim() : (row['Class'] !== undefined ? String(row['Class']).trim() : '');
+          let classStr = '';
+          if (row['Class of Student'] !== undefined) classStr = String(row['Class of Student']).trim();
+          else if (row['Class of Stu'] !== undefined) classStr = String(row['Class of Stu']).trim();
+          else if (row['Class'] !== undefined) classStr = String(row['Class']).trim();
+          
           const divisionStr = row['Division'] !== undefined ? String(row['Division']).trim() : '';
           
           let classDivision = '';
