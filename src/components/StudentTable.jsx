@@ -94,6 +94,55 @@ export const StudentTable = ({ onBack, setPdfStudents }) => {
     }
   };
 
+  const handleGenerateAll = async () => {
+    if (students.length === 0) return;
+    
+    setIsGenerating(true);
+    setGenerationProgress(null);
+    
+    const controller = new AbortController();
+    setAbortController(controller);
+
+    try {
+      setPdfStudents(students);
+      
+      // Give React time to render the hidden template
+      await new Promise(resolve => setTimeout(resolve, 600));
+      
+      await generateHallTicket(students, {
+        signal: controller.signal,
+        onProgress: (current, total) => {
+          setGenerationProgress({ current, total });
+        }
+      });
+      
+      // Update generation status
+      const now = new Date().toISOString();
+      await db.transaction('rw', db.students, async () => {
+        for (const student of students) {
+          await db.students.update(student.id, {
+            isGenerated: true,
+            generatedAt: now
+          });
+        }
+      });
+      
+      // Deselect all
+      setSelectedIds(new Set());
+    } catch (err) {
+      if (err.message === 'Generation cancelled') {
+        alert('PDF generation was cancelled.');
+      } else {
+        console.error('Error generating PDF:', err);
+        alert('Failed to generate PDF. Please try again.');
+      }
+    } finally {
+      setIsGenerating(false);
+      setGenerationProgress(null);
+      setAbortController(null);
+    }
+  };
+
   const handleSaveEdit = async (e) => {
     e.preventDefault();
     if (!editingStudent) return;
@@ -125,6 +174,15 @@ export const StudentTable = ({ onBack, setPdfStudents }) => {
           <div style={{ display: 'flex', gap: '12px' }}>
             <button className="btn btn-secondary" onClick={clearData}>
               <Trash2 size={16} /> Clear Data
+            </button>
+            <button 
+              className="btn btn-secondary"
+              disabled={students.length === 0 || isGenerating}
+              onClick={handleGenerateAll}
+              style={{ opacity: (students.length === 0 || isGenerating) ? 0.6 : 1 }}
+            >
+              <Printer size={16} /> 
+              Generate All
             </button>
             <button 
               className={`btn ${selectedIds.size > 0 ? 'btn-primary' : 'btn-secondary'}`}

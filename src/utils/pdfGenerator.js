@@ -38,7 +38,7 @@ export const generateHallTicket = async (students, options = {}) => {
     
     // Generate canvas with fixed A4 pixel width to prevent narrowing
     const canvas = await html2canvas(page, {
-      scale: 2,             // High resolution for crisp text
+      scale: 1.2,           // Reduced resolution for much smaller file sizes
       useCORS: true,
       logging: false,
       width: A4_WIDTH_PX,   // Force exact A4 width capture
@@ -47,14 +47,15 @@ export const generateHallTicket = async (students, options = {}) => {
     
     if (signal?.aborted) throw new Error('Generation cancelled');
 
-    const imgData = canvas.toDataURL('image/png');
+    // Use JPEG with 0.7 quality instead of lossless PNG to massively reduce file size
+    const imgData = canvas.toDataURL('image/jpeg', 0.7);
     
     if (i > 0) {
       pdf.addPage();
     }
     
-    // Fill the full A4 page (210mm x 297mm)
-    pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
+    // Fill the full A4 page (210mm x 297mm), using FAST compression
+    pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
   }
   
   if (signal?.aborted) throw new Error('Generation cancelled');
