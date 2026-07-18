@@ -131,9 +131,19 @@ export const HallTicketTemplate = forwardRef(({ students }, ref) => {
 
           </div>
           
-          {/* Page Number */}
-          <div style={{ position: 'absolute', bottom: '20px', right: '50px', fontSize: '11px', color: '#999' }}>
-            Page 1
+          {/* Footer Info & Page Number */}
+          <div style={{ 
+            position: 'absolute', 
+            bottom: '16px', 
+            left: '50px', 
+            right: '50px', 
+            display: 'flex', 
+            justify: 'space-between', 
+            fontSize: '10.5px', 
+            color: '#888' 
+          }}>
+            <span>QSpace Hall Ticket Generator v1.0.0 &bull; &copy; {new Date().getFullYear()} QSpace Academy</span>
+            <span>Page 1</span>
           </div>
         </div>
       ))}

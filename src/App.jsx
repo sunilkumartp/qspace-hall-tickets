@@ -36,6 +36,12 @@ function App() {
         )}
       </main>
 
+      <footer style={{ marginTop: '60px', textAlign: 'center', color: '#64748b', fontSize: '13px', borderTop: '1px solid #e2e8f0', paddingTop: '20px' }}>
+        <p style={{ margin: 0 }}>
+          <strong>QSpace Hall Ticket Generator</strong> v1.0.0 &bull; &copy; {new Date().getFullYear()} QSpace Academy. All rights reserved.
+        </p>
+      </footer>
+
       {/* Hidden container for PDF rendering — uses fixed position with visibility hidden
            so html2canvas can capture at full width without the container being collapsed */}
       <div 
