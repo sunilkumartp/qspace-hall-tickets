@@ -36,11 +36,19 @@ function App() {
         )}
       </main>
 
-      {/* Hidden container for PDF rendering */}
+      {/* Hidden container for PDF rendering — uses fixed position with visibility hidden
+           so html2canvas can capture at full width without the container being collapsed */}
       <div 
         id="pdf-render-container" 
-        className="print-offscreen" 
-        style={{ position: 'absolute', top: '-9999px', left: '-9999px' }}
+        style={{ 
+          position: 'fixed', 
+          top: 0, 
+          left: 0, 
+          width: '794px',
+          overflow: 'hidden',
+          visibility: 'hidden',
+          zIndex: -1
+        }}
       >
         <HallTicketTemplate students={pdfStudents} />
       </div>

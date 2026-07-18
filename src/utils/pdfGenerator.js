@@ -1,6 +1,10 @@
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 
+// A4 dimensions in pixels at 96 DPI
+const A4_WIDTH_PX = 794;
+const A4_HEIGHT_PX = 1123;
+
 export const generateHallTicket = async (students) => {
   const container = document.getElementById('pdf-render-container');
   if (!container) throw new Error("PDF render container not found in DOM");
@@ -23,11 +27,13 @@ export const generateHallTicket = async (students) => {
   for (let i = 0; i < pages.length; i++) {
     const page = pages[i];
     
-    // Generate canvas
+    // Generate canvas with fixed A4 pixel width to prevent narrowing
     const canvas = await html2canvas(page, {
-      scale: 2, // High resolution
+      scale: 2,             // High resolution for crisp text
       useCORS: true,
       logging: false,
+      width: A4_WIDTH_PX,   // Force exact A4 width capture
+      windowWidth: A4_WIDTH_PX, // Simulate a viewport of exactly A4 width
     });
     
     const imgData = canvas.toDataURL('image/png');
@@ -36,12 +42,8 @@ export const generateHallTicket = async (students) => {
       pdf.addPage();
     }
     
-    const imgProps = pdf.getImageProperties(imgData);
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-    
-    // 210mm x 297mm A4 size approx
-    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    // Fill the full A4 page (210mm x 297mm)
+    pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
   }
   
   const fileName = students.length === 1 
