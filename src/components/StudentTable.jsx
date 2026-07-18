@@ -9,6 +9,8 @@ export const StudentTable = ({ onBack, setPdfStudents }) => {
   const students = useLiveQuery(() => db.students.toArray());
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generationProgress, setGenerationProgress] = useState(null);
+  const [abortController, setAbortController] = useState(null);
   const [editingStudent, setEditingStudent] = useState(null);
 
   const toggleSelection = (id) => {
@@ -40,6 +42,11 @@ export const StudentTable = ({ onBack, setPdfStudents }) => {
     if (selectedIds.size === 0) return;
     
     setIsGenerating(true);
+    setGenerationProgress(null);
+    
+    const controller = new AbortController();
+    setAbortController(controller);
+
     try {
       const selectedStudents = students.filter(s => selectedIds.has(s.id));
       setPdfStudents(selectedStudents);
@@ -47,7 +54,12 @@ export const StudentTable = ({ onBack, setPdfStudents }) => {
       // Give React time to render the hidden template
       await new Promise(resolve => setTimeout(resolve, 600));
       
-      await generateHallTicket(selectedStudents);
+      await generateHallTicket(selectedStudents, {
+        signal: controller.signal,
+        onProgress: (current, total) => {
+          setGenerationProgress({ current, total });
+        }
+      });
       
       // Update generation status
       const now = new Date().toISOString();
@@ -63,10 +75,22 @@ export const StudentTable = ({ onBack, setPdfStudents }) => {
       // Deselect all
       setSelectedIds(new Set());
     } catch (err) {
-      console.error('Error generating PDF:', err);
-      alert('Failed to generate PDF. Please try again.');
+      if (err.message === 'Generation cancelled') {
+        alert('PDF generation was cancelled.');
+      } else {
+        console.error('Error generating PDF:', err);
+        alert('Failed to generate PDF. Please try again.');
+      }
     } finally {
       setIsGenerating(false);
+      setGenerationProgress(null);
+      setAbortController(null);
+    }
+  };
+
+  const handleCancelGeneration = () => {
+    if (abortController) {
+      abortController.abort();
     }
   };
 
@@ -109,7 +133,10 @@ export const StudentTable = ({ onBack, setPdfStudents }) => {
               style={{ opacity: (selectedIds.size === 0 || isGenerating) ? 0.6 : 1 }}
             >
               {isGenerating ? (
-                <>Processing...</>
+                <>
+                  <Clock size={16} /> 
+                  Generating...
+                </>
               ) : (
                 <>
                   <Printer size={16} /> 
@@ -276,6 +303,47 @@ export const StudentTable = ({ onBack, setPdfStudents }) => {
                 <button type="submit" className="btn btn-primary">Save Changes</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Progress Modal */}
+      {isGenerating && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.6)', zIndex: 200, display: 'flex',
+          alignItems: 'center', justifyContent: 'center'
+        }}>
+          <div style={{
+            background: 'white', padding: '32px', borderRadius: '12px',
+            width: '100%', maxWidth: '400px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+            textAlign: 'center'
+          }}>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '20px', color: 'var(--primary)' }}>Generating Hall Tickets</h3>
+            {generationProgress ? (
+              <>
+                <p style={{ fontSize: '16px', marginBottom: '8px', color: '#4a4a4a' }}>
+                  Processing {generationProgress.current} of {generationProgress.total}...
+                </p>
+                <div style={{ width: '100%', backgroundColor: '#eef5ff', borderRadius: '4px', height: '10px', overflow: 'hidden', marginBottom: '24px' }}>
+                   <div style={{ 
+                      width: `${(generationProgress.current / generationProgress.total) * 100}%`,
+                      backgroundColor: 'var(--primary)',
+                      height: '100%',
+                      transition: 'width 0.3s ease'
+                   }} />
+                </div>
+              </>
+            ) : (
+              <p style={{ fontSize: '16px', marginBottom: '24px', color: 'var(--text-muted)' }}>Preparing data...</p>
+            )}
+            <button 
+              className="btn btn-secondary" 
+              onClick={handleCancelGeneration}
+              style={{ width: '100%', padding: '10px', fontWeight: '500' }}
+            >
+              Cancel Generation
+            </button>
           </div>
         </div>
       )}
