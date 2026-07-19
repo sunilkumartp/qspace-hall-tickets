@@ -7,8 +7,6 @@ export const generateHallTicket = async (students, options = {}) => {
     throw new Error("No students provided.");
   }
   
-  // Use jsPDF directly for pure vector PDFs.
-  // This reduces a 100-page PDF from ~50MB to less than 100KB while keeping text perfectly crisp!
   const pdf = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -28,7 +26,6 @@ export const generateHallTicket = async (students, options = {}) => {
     if (signal?.aborted) throw new Error('Generation cancelled');
     if (onProgress) onProgress(i + 1, students.length);
     
-    // Keep UI responsive during massive batches
     if (i % 10 === 0) await yieldToMain();
 
     if (i > 0) pdf.addPage();
@@ -64,15 +61,18 @@ export const generateHallTicket = async (students, options = {}) => {
     pdf.setTextColor(51, 51, 51);
     pdf.text(student.school || "", MARGIN + 26, y);
     
-    // Congrats badge
+    // Congrats badge matching reference (green text, small green box for tick)
     pdf.setFillColor(76, 175, 80);
-    const badgeW = 38;
-    const badgeX = MARGIN + CONTENT_W - 6 - badgeW;
-    pdf.roundedRect(badgeX, y - 4, badgeW, 5.5, 1, 1, 'F');
+    const badgeX = MARGIN + CONTENT_W - 40;
+    pdf.roundedRect(badgeX, y - 3.5, 4, 4, 0.5, 0.5, 'F');
     pdf.setTextColor(255, 255, 255);
-    pdf.setFontSize(8.5);
-    // Draw text with left offset instead of center align which may not be supported
-    pdf.text("✓ Congratulations...!!", badgeX + 3.5, y);
+    pdf.setFontSize(8);
+    pdf.text("✓", badgeX + 0.8, y - 0.5);
+    
+    pdf.setTextColor(76, 175, 80);
+    pdf.setFontSize(10);
+    pdf.setFont("helvetica", "bold");
+    pdf.text("Congratulations...!!", badgeX + 5.5, y);
 
     y += 4.5;
     pdf.setDrawColor(224, 224, 224);
@@ -83,7 +83,7 @@ export const generateHallTicket = async (students, options = {}) => {
     // Helper for Section Header
     const drawSectionHeader = (title, currentY) => {
       pdf.setFillColor(PRIMARY_R, PRIMARY_G, PRIMARY_B);
-      pdf.rect(MARGIN + 7, currentY - 3.5, 1.2, 4.5, 'F');
+      pdf.rect(MARGIN + 7, currentY - 4, 1.0, 5, 'F');
       pdf.setTextColor(PRIMARY_R, PRIMARY_G, PRIMARY_B);
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(10.5);
@@ -97,9 +97,9 @@ export const generateHallTicket = async (students, options = {}) => {
     pdf.setFillColor(249, 251, 253);
     pdf.setDrawColor(238, 245, 255);
     pdf.setLineWidth(0.3);
-    pdf.roundedRect(MARGIN + 7, y, CONTENT_W - 14, 40, 1.5, 1.5, 'FD');
+    pdf.roundedRect(MARGIN + 7, y, CONTENT_W - 14, 44, 1.5, 1.5, 'FD');
     
-    y += 7;
+    y += 8;
     const drawDetailRow = (label, val, valBold, valColor) => {
       pdf.setTextColor(85, 85, 85);
       pdf.setFont("helvetica", "bold");
@@ -117,7 +117,7 @@ export const generateHallTicket = async (students, options = {}) => {
       const splitVal = pdf.splitTextToSize(val || "-", maxValWidth);
       pdf.text(splitVal, MARGIN + 45, y);
       
-      y += 7 + ((splitVal.length - 1) * 4.5);
+      y += 8 + ((splitVal.length - 1) * 4.5);
     };
 
     drawDetailRow("Student Name:", student.name, true, [PRIMARY_R, PRIMARY_G, PRIMARY_B]);
@@ -126,7 +126,7 @@ export const generateHallTicket = async (students, options = {}) => {
     drawDetailRow("Reporting Time:", student.time);
     drawDetailRow("Exam Venue:", student.venue);
 
-    y += 2;
+    y += 1;
     pdf.setTextColor(119, 119, 119);
     pdf.setFont("helvetica", "italic");
     pdf.setFontSize(8);
@@ -149,10 +149,10 @@ export const generateHallTicket = async (students, options = {}) => {
       pdf.setFontSize(9.5);
       pdf.text(label, MARGIN + 7, y);
       
-      // Dotted line
-      pdf.setDrawColor(204, 204, 204);
-      pdf.setLineWidth(0.3);
-      pdf.setLineDashPattern([1, 1], 0);
+      // Fine Dotted line matching reference
+      pdf.setDrawColor(220, 220, 220);
+      pdf.setLineWidth(0.2);
+      pdf.setLineDashPattern([0.5, 1.5], 0);
       pdf.line(MARGIN + 42, y, WIDTH - MARGIN - 7, y);
       pdf.setLineDashPattern([], 0); // Reset dash
       y += 8.5;
@@ -170,26 +170,54 @@ export const generateHallTicket = async (students, options = {}) => {
     // --- Section 3: Important Instructions ---
     y = drawSectionHeader("IMPORTANT INSTRUCTIONS", y);
     pdf.setTextColor(74, 74, 74);
-    pdf.setFont("helvetica", "normal");
     pdf.setFontSize(9.5);
     
-    const instructions = [
-      "Students shall bring this HALL TICKET to the exam venue.",
-      "Students must carry school ID Card, writing board, pencil, eraser and sharpener. Other materials will be provided by the organizers.",
-      "There is NO participation fee for any round.",
-      "Winners of Round 2 will qualify for the State Finals and receive certificates & trophies.",
-      "Certificates will be provided to all participants."
-    ];
+    const drawMixedInstruction = (yPos, parts) => {
+      pdf.setFillColor(100, 100, 100);
+      pdf.circle(MARGIN + 9, yPos - 1.2, 0.5, 'F');
+      
+      let currentX = MARGIN + 12;
+      parts.forEach(part => {
+        pdf.setFont("helvetica", part.bold ? "bold" : "normal");
+        pdf.setTextColor(74, 74, 74);
+        pdf.text(part.text, currentX, yPos);
+        currentX += pdf.getTextWidth(part.text);
+      });
+    };
 
-    pdf.setFillColor(74, 74, 74);
-    instructions.forEach(inst => {
-      pdf.circle(MARGIN + 9, y - 1.2, 0.6, 'F');
-      const lines = pdf.splitTextToSize(inst, CONTENT_W - 18);
-      pdf.text(lines, MARGIN + 12, y);
-      y += lines.length * 5;
-    });
+    drawMixedInstruction(y, [
+      { text: "Students shall bring this ", bold: false },
+      { text: "HALL TICKET", bold: true },
+      { text: " to the exam venue.", bold: false }
+    ]);
+    y += 5.5;
 
-    y += 5;
+    // Line 2 wraps, but has no bold
+    pdf.setFillColor(100, 100, 100);
+    pdf.circle(MARGIN + 9, y - 1.2, 0.5, 'F');
+    pdf.setFont("helvetica", "normal");
+    const inst2 = "Students must carry school ID Card, writing board, pencil, eraser and sharpener. Other materials will be provided by the organizers.";
+    const lines2 = pdf.splitTextToSize(inst2, CONTENT_W - 18);
+    pdf.text(lines2, MARGIN + 12, y);
+    y += lines2.length * 5.5;
+
+    drawMixedInstruction(y, [
+      { text: "There is ", bold: false },
+      { text: "NO participation fee", bold: true },
+      { text: " for any round.", bold: false }
+    ]);
+    y += 5.5;
+
+    drawMixedInstruction(y, [
+      { text: "Winners of Round 2 will qualify for the State Finals and receive certificates & trophies.", bold: false }
+    ]);
+    y += 5.5;
+
+    drawMixedInstruction(y, [
+      { text: "Certificates will be provided to all participants.", bold: false }
+    ]);
+
+    y += 7.5;
 
     // --- Bottom Banner ---
     pdf.setFillColor(238, 245, 255);
