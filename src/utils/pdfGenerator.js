@@ -235,7 +235,8 @@ export const generateHallTicket = async (students, options = {}) => {
       { text: "Certificates will be provided to all participants.", bold: false }
     ]);
 
-    y += 8;
+    // Force banner to dock near the bottom border
+    y = Math.max(y + 8, HEIGHT - MARGIN - 22);
 
     // --- Bottom Banner ---
     pdf.setFillColor(242, 249, 255); // Much lighter background
