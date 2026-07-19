@@ -66,12 +66,13 @@ export const generateHallTicket = async (students, options = {}) => {
     
     // Congrats badge
     pdf.setFillColor(76, 175, 80);
-    const badgeW = 34;
-    const badgeX = WIDTH - MARGIN - badgeW - 6;
+    const badgeW = 38;
+    const badgeX = MARGIN + CONTENT_W - 6 - badgeW;
     pdf.roundedRect(badgeX, y - 4, badgeW, 5.5, 1, 1, 'F');
     pdf.setTextColor(255, 255, 255);
     pdf.setFontSize(8.5);
-    pdf.text("✓ Congratulations...!!", badgeX + (badgeW / 2), y, { align: 'center' });
+    // Draw text with left offset instead of center align which may not be supported
+    pdf.text("✓ Congratulations...!!", badgeX + 3.5, y);
 
     y += 4.5;
     pdf.setDrawColor(224, 224, 224);
