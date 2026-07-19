@@ -59,20 +59,23 @@ export const generateHallTicket = async (students, options = {}) => {
     pdf.setFont("helvetica", "bold");
     pdf.text("Issued To: ", MARGIN + 7, y);
     pdf.setTextColor(51, 51, 51);
-    pdf.text(student.school || "", MARGIN + 26, y);
+    pdf.text(student.school || "", MARGIN + 25, y);
     
-    // Congrats badge matching reference (green text, small green box for tick)
+    // Congrats badge matching reference (green text, perfect vector tick)
     pdf.setFillColor(76, 175, 80);
     const badgeX = MARGIN + CONTENT_W - 40;
-    pdf.roundedRect(badgeX, y - 3.5, 4, 4, 0.5, 0.5, 'F');
-    pdf.setTextColor(255, 255, 255);
-    pdf.setFontSize(8);
-    pdf.text("✓", badgeX + 0.8, y - 0.5);
+    pdf.roundedRect(badgeX, y - 3.5, 4.5, 4.5, 0.5, 0.5, 'F');
+    
+    // Manual vector tick for perfect rendering
+    pdf.setDrawColor(255, 255, 255);
+    pdf.setLineWidth(0.4);
+    pdf.line(badgeX + 1.2, y - 1.3, badgeX + 2.0, y - 0.3); // short leg
+    pdf.line(badgeX + 2.0, y - 0.3, badgeX + 3.5, y - 2.3); // long leg
     
     pdf.setTextColor(76, 175, 80);
     pdf.setFontSize(10);
     pdf.setFont("helvetica", "bold");
-    pdf.text("Congratulations...!!", badgeX + 5.5, y);
+    pdf.text("Congratulations...!!", badgeX + 6, y);
 
     y += 4.5;
     pdf.setDrawColor(224, 224, 224);
@@ -83,11 +86,11 @@ export const generateHallTicket = async (students, options = {}) => {
     // Helper for Section Header
     const drawSectionHeader = (title, currentY) => {
       pdf.setFillColor(PRIMARY_R, PRIMARY_G, PRIMARY_B);
-      pdf.rect(MARGIN + 7, currentY - 4, 1.0, 5, 'F');
+      pdf.rect(MARGIN + 7, currentY - 3.5, 0.8, 4.5, 'F');
       pdf.setTextColor(PRIMARY_R, PRIMARY_G, PRIMARY_B);
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(10.5);
-      pdf.text(title, MARGIN + 10.5, currentY);
+      pdf.text(title, MARGIN + 10, currentY);
       return currentY + 5;
     };
 
@@ -97,9 +100,9 @@ export const generateHallTicket = async (students, options = {}) => {
     pdf.setFillColor(249, 251, 253);
     pdf.setDrawColor(238, 245, 255);
     pdf.setLineWidth(0.3);
-    pdf.roundedRect(MARGIN + 7, y, CONTENT_W - 14, 44, 1.5, 1.5, 'FD');
+    pdf.roundedRect(MARGIN + 7, y, CONTENT_W - 14, 38, 1.5, 1.5, 'FD');
     
-    y += 8;
+    y += 7.5;
     const drawDetailRow = (label, val, valBold, valColor) => {
       pdf.setTextColor(85, 85, 85);
       pdf.setFont("helvetica", "bold");
@@ -117,7 +120,7 @@ export const generateHallTicket = async (students, options = {}) => {
       const splitVal = pdf.splitTextToSize(val || "-", maxValWidth);
       pdf.text(splitVal, MARGIN + 45, y);
       
-      y += 8 + ((splitVal.length - 1) * 4.5);
+      y += 7.5 + ((splitVal.length - 1) * 4.5);
     };
 
     drawDetailRow("Student Name:", student.name, true, [PRIMARY_R, PRIMARY_G, PRIMARY_B]);
@@ -153,7 +156,7 @@ export const generateHallTicket = async (students, options = {}) => {
       pdf.setDrawColor(220, 220, 220);
       pdf.setLineWidth(0.2);
       pdf.setLineDashPattern([0.5, 1.5], 0);
-      pdf.line(MARGIN + 42, y, WIDTH - MARGIN - 7, y);
+      pdf.line(MARGIN + 36, y, WIDTH - MARGIN - 7, y);
       pdf.setLineDashPattern([], 0); // Reset dash
       y += 8.5;
     };
@@ -199,7 +202,7 @@ export const generateHallTicket = async (students, options = {}) => {
     const inst2 = "Students must carry school ID Card, writing board, pencil, eraser and sharpener. Other materials will be provided by the organizers.";
     const lines2 = pdf.splitTextToSize(inst2, CONTENT_W - 18);
     pdf.text(lines2, MARGIN + 12, y);
-    y += lines2.length * 5.5;
+    y += lines2.length * 5.5 + 2; // Added gap below this block
 
     drawMixedInstruction(y, [
       { text: "There is ", bold: false },
@@ -220,8 +223,8 @@ export const generateHallTicket = async (students, options = {}) => {
     y += 7.5;
 
     // --- Bottom Banner ---
-    pdf.setFillColor(238, 245, 255);
-    pdf.setDrawColor(204, 224, 255);
+    pdf.setFillColor(230, 242, 255);
+    pdf.setDrawColor(190, 215, 255);
     pdf.setLineWidth(0.3);
     pdf.roundedRect(MARGIN + 7, y, CONTENT_W - 14, 11, 1.5, 1.5, 'FD');
     
