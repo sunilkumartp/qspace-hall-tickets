@@ -100,7 +100,15 @@ export const generateHallTicket = async (students, options = {}) => {
     pdf.setFillColor(249, 251, 253);
     pdf.setDrawColor(238, 245, 255);
     pdf.setLineWidth(0.3);
-    pdf.roundedRect(MARGIN + 7, y, CONTENT_W - 14, 38, 1.5, 1.5, 'FD');
+    
+    // Calculate dynamic height based on Exam Venue text wrapping
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(10);
+    const maxValWidth = CONTENT_W - 60;
+    const venueLines = pdf.splitTextToSize(student.venue || "-", maxValWidth);
+    const venueExtraHeight = Math.max(0, (venueLines.length - 1) * 4.5);
+    
+    pdf.roundedRect(MARGIN + 7, y, CONTENT_W - 14, 41 + venueExtraHeight, 1.5, 1.5, 'FD');
     
     y += 7.5;
     const drawDetailRow = (label, val, valBold, valColor) => {
@@ -153,10 +161,10 @@ export const generateHallTicket = async (students, options = {}) => {
       pdf.text(label, MARGIN + 7, y);
       
       // Fine Dotted line matching reference
-      pdf.setDrawColor(220, 220, 220);
-      pdf.setLineWidth(0.2);
-      pdf.setLineDashPattern([0.5, 1.5], 0);
-      pdf.line(MARGIN + 36, y, WIDTH - MARGIN - 7, y);
+      pdf.setDrawColor(180, 180, 180);
+      pdf.setLineWidth(0.3);
+      pdf.setLineDashPattern([1, 1.5], 0);
+      pdf.line(MARGIN + 42, y, WIDTH - MARGIN - 7, y);
       pdf.setLineDashPattern([], 0); // Reset dash
       y += 8.5;
     };
@@ -224,9 +232,11 @@ export const generateHallTicket = async (students, options = {}) => {
 
     // --- Bottom Banner ---
     pdf.setFillColor(230, 242, 255);
-    pdf.setDrawColor(190, 215, 255);
-    pdf.setLineWidth(0.3);
+    pdf.setDrawColor(170, 200, 255);
+    pdf.setLineWidth(0.4);
+    pdf.setLineDashPattern([1.5, 1.5], 0);
     pdf.roundedRect(MARGIN + 7, y, CONTENT_W - 14, 11, 1.5, 1.5, 'FD');
+    pdf.setLineDashPattern([], 0); // Reset dash
     
     pdf.setTextColor(PRIMARY_R, PRIMARY_G, PRIMARY_B);
     pdf.setFont("helvetica", "bold");
