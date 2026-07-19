@@ -5,7 +5,7 @@ import { db } from '../db/database';
 import { generateHallTicket } from '../utils/pdfGenerator';
 import { format } from 'date-fns';
 
-export const StudentTable = ({ onBack, setPdfStudents }) => {
+export const StudentTable = ({ onBack }) => {
   const students = useLiveQuery(() => db.students.toArray());
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [isGenerating, setIsGenerating] = useState(false);
@@ -49,10 +49,7 @@ export const StudentTable = ({ onBack, setPdfStudents }) => {
 
     try {
       const selectedStudents = students.filter(s => selectedIds.has(s.id));
-      setPdfStudents(selectedStudents);
-      
-      // Give React time to render the hidden template
-      await new Promise(resolve => setTimeout(resolve, 600));
+
       
       await generateHallTicket(selectedStudents, {
         signal: controller.signal,
@@ -104,10 +101,7 @@ export const StudentTable = ({ onBack, setPdfStudents }) => {
     setAbortController(controller);
 
     try {
-      setPdfStudents(students);
-      
-      // Give React time to render the hidden template
-      await new Promise(resolve => setTimeout(resolve, 600));
+
       
       await generateHallTicket(students, {
         signal: controller.signal,

@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { UploadSection } from './components/UploadSection';
 import { StudentTable } from './components/StudentTable';
-import { HallTicketTemplate } from './components/HallTicketTemplate';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from './db/database';
 
 function App() {
   const studentsCount = useLiveQuery(() => db.students.count());
   const [view, setView] = useState('upload');
-  const [pdfStudents, setPdfStudents] = useState([]);
 
   useEffect(() => {
     if (studentsCount > 0) {
@@ -31,7 +29,6 @@ function App() {
         ) : (
           <StudentTable 
             onBack={() => setView('upload')} 
-            setPdfStudents={setPdfStudents}
           />
         )}
       </main>
@@ -42,20 +39,7 @@ function App() {
         </p>
       </footer>
 
-      {/* Hidden container for PDF rendering — uses fixed position offscreen
-           so html2canvas can capture at full width without the container being collapsed */}
-      <div 
-        id="pdf-render-container" 
-        style={{ 
-          position: 'fixed', 
-          top: '-9999px', 
-          left: '-9999px', 
-          width: '794px',
-          zIndex: -1000
-        }}
-      >
-        <HallTicketTemplate students={pdfStudents} />
-      </div>
+
     </div>
   );
 }
