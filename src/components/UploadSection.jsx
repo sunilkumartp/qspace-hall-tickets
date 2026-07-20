@@ -3,7 +3,7 @@ import { UploadCloud, FileSpreadsheet, AlertCircle } from 'lucide-react';
 import { parseExcelFile } from '../utils/excelParser';
 import { db } from '../db/database';
 
-export const UploadSection = ({ onUploadSuccess }) => {
+export const UploadSection = ({ mode, onUploadSuccess }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -33,7 +33,8 @@ export const UploadSection = ({ onUploadSuccess }) => {
       }
 
       // Add to database
-      await db.students.bulkAdd(students);
+      const studentsWithMode = students.map(s => ({ ...s, recordType: mode }));
+      await db.students.bulkAdd(studentsWithMode);
       
       onUploadSuccess(students.length);
     } catch (err) {

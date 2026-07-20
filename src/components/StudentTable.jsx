@@ -3,10 +3,14 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { Check, Download, Trash2, Clock, Printer, Edit2, X } from 'lucide-react';
 import { db } from '../db/database';
 import { generateHallTicket } from '../utils/pdfGenerator';
+import { generateWorkshopSlip } from '../utils/workshopPdfGenerator';
 import { format } from 'date-fns';
 
-export const StudentTable = ({ onBack }) => {
-  const students = useLiveQuery(() => db.students.toArray());
+export const StudentTable = ({ mode, year, onBack }) => {
+  const students = useLiveQuery(
+    () => db.students.where('recordType').equals(mode).toArray(),
+    [mode]
+  );
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationProgress, setGenerationProgress] = useState(null);
@@ -50,13 +54,22 @@ export const StudentTable = ({ onBack }) => {
     try {
       const selectedStudents = students.filter(s => selectedIds.has(s.id));
 
-      
-      await generateHallTicket(selectedStudents, {
-        signal: controller.signal,
-        onProgress: (current, total) => {
-          setGenerationProgress({ current, total });
-        }
-      });
+      if (mode === 'workshop') {
+        await generateWorkshopSlip(selectedStudents, {
+          signal: controller.signal,
+          year,
+          onProgress: (current, total) => {
+            setGenerationProgress({ current, total });
+          }
+        });
+      } else {
+        await generateHallTicket(selectedStudents, {
+          signal: controller.signal,
+          onProgress: (current, total) => {
+            setGenerationProgress({ current, total });
+          }
+        });
+      }
       
       // Update generation status
       const now = new Date().toISOString();
@@ -102,13 +115,22 @@ export const StudentTable = ({ onBack }) => {
 
     try {
 
-      
-      await generateHallTicket(students, {
-        signal: controller.signal,
-        onProgress: (current, total) => {
-          setGenerationProgress({ current, total });
-        }
-      });
+      if (mode === 'workshop') {
+        await generateWorkshopSlip(students, {
+          signal: controller.signal,
+          year,
+          onProgress: (current, total) => {
+            setGenerationProgress({ current, total });
+          }
+        });
+      } else {
+        await generateHallTicket(students, {
+          signal: controller.signal,
+          onProgress: (current, total) => {
+            setGenerationProgress({ current, total });
+          }
+        });
+      }
       
       // Update generation status
       const now = new Date().toISOString();
