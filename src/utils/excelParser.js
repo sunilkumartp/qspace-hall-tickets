@@ -66,14 +66,14 @@ export const parseExcelFile = (file) => {
     reader.onload = (e) => {
       try {
         const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+        const workbook = XLSX.read(data, { type: 'array' });
         
         // Assuming data is in the first sheet
         const firstSheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[firstSheetName];
         
-        // Convert to JSON – raw:false gives formatted strings, but cellDates gives Date objects for date cells
-        const rawData = XLSX.utils.sheet_to_json(worksheet, { raw: false, dateNF: 'd-MMM-yy' });
+        // Convert to JSON
+        const rawData = XLSX.utils.sheet_to_json(worksheet, { raw: false });
         
         // Map to our database schema
         const students = rawData.map((row, index) => {
@@ -97,7 +97,9 @@ export const parseExcelFile = (file) => {
           }
 
           let formattedDate = '';
-          const rawDateVal = row['Date'];
+          // Flexible key lookup for Date column (handles variations like 'Date', 'Date ', etc.)
+          const dateKey = Object.keys(row).find(k => k.trim().toLowerCase() === 'date');
+          const rawDateVal = dateKey ? row[dateKey] : undefined;
           if (rawDateVal) {
              const parsedDate = parseExcelDate(rawDateVal);
              if (parsedDate) {
