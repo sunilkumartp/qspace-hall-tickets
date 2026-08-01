@@ -18,7 +18,7 @@ export const UploadSection = ({ mode, onUploadSuccess }) => {
     }
   }, []);
 
-  const processFile = async (file) => {
+  const processFile = useCallback(async (file) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -42,7 +42,7 @@ export const UploadSection = ({ mode, onUploadSuccess }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [mode, onUploadSuccess]);
 
   const handleDrop = useCallback((e) => {
     e.preventDefault();
@@ -52,7 +52,7 @@ export const UploadSection = ({ mode, onUploadSuccess }) => {
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       processFile(e.dataTransfer.files[0]);
     }
-  }, []);
+  }, [processFile]);
 
   const handleChange = (e) => {
     e.preventDefault();

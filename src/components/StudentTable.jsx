@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Check, Download, Trash2, Clock, Printer, Edit2, X } from 'lucide-react';
+import { Check, Trash2, Clock, Printer, Edit2, X } from 'lucide-react';
 import { db } from '../db/database';
 import { generateHallTicket } from '../utils/pdfGenerator';
 import { generateWorkshopSlip } from '../utils/workshopPdfGenerator';
@@ -236,6 +236,8 @@ export const StudentTable = ({ mode, year, onBack }) => {
                 <th>Student Details</th>
                 <th>Class/Division</th>
                 <th>School</th>
+                <th>Date</th>
+                <th>Time</th>
                 <th>Status</th>
                 <th>Actions</th>
               </tr>
@@ -243,7 +245,7 @@ export const StudentTable = ({ mode, year, onBack }) => {
             <tbody>
               {students.length === 0 ? (
                 <tr>
-                  <td colSpan="6" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                  <td colSpan="8" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
                     No students found. Please import an excel file.
                   </td>
                 </tr>
@@ -264,6 +266,12 @@ export const StudentTable = ({ mode, year, onBack }) => {
                     <td>{student.classDivision}</td>
                     <td>
                       <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{student.school}</div>
+                    </td>
+                    <td>
+                      <div style={{ fontSize: '13px' }}>{student.date || '-'}</div>
+                    </td>
+                    <td>
+                      <div style={{ fontSize: '13px' }}>{student.time || '-'}</div>
                     </td>
                     <td>
                       {student.isGenerated ? (

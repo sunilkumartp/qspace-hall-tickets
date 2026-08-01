@@ -15,7 +15,6 @@ export const generateWorkshopSlip = async (students, options = {}) => {
 
   const MARGIN = 15;
   const WIDTH = 210;
-  const HEIGHT = 297;
   const CONTENT_W = WIDTH - (MARGIN * 2);
 
   // Helper wait for non-blocking UI
