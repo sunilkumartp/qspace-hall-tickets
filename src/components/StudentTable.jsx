@@ -4,6 +4,7 @@ import { Check, Trash2, Clock, Printer, Edit2, X } from 'lucide-react';
 import { db } from '../db/database';
 import { generateHallTicket } from '../utils/pdfGenerator';
 import { generateWorkshopSlip } from '../utils/workshopPdfGenerator';
+import { logGeneration } from '../utils/analytics';
 import { format } from 'date-fns';
 
 export const StudentTable = ({ mode, year, onBack }) => {
@@ -84,6 +85,9 @@ export const StudentTable = ({ mode, year, onBack }) => {
       
       // Deselect all
       setSelectedIds(new Set());
+
+      // Log analytics (fire-and-forget)
+      logGeneration({ documentType: mode, studentCount: selectedStudents.length, year });
     } catch (err) {
       if (err.message === 'Generation cancelled') {
         alert('PDF generation was cancelled.');
@@ -145,6 +149,9 @@ export const StudentTable = ({ mode, year, onBack }) => {
       
       // Deselect all
       setSelectedIds(new Set());
+
+      // Log analytics (fire-and-forget)
+      logGeneration({ documentType: mode, studentCount: students.length, year });
     } catch (err) {
       if (err.message === 'Generation cancelled') {
         alert('PDF generation was cancelled.');

@@ -3,6 +3,7 @@ import { UploadSection } from './components/UploadSection';
 import { StudentTable } from './components/StudentTable';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from './db/database';
+import { logPageVisit } from './utils/analytics';
 
 function App() {
   const [appMode, setAppMode] = useState('hallTicket');
@@ -22,6 +23,9 @@ function App() {
       setView('upload');
     }
   }, [studentsCount, appMode]);
+
+  // Log page visit once on mount
+  useEffect(() => { logPageVisit(); }, []);
 
   return (
     <div style={{ minHeight: '100vh', padding: '40px 20px' }}>
