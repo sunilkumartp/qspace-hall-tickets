@@ -20,26 +20,36 @@ export const AuthProvider = ({ children }) => {
   const [role, setRole] = useState('user');
   const [loading, setLoading] = useState(true);
 
-  const fetchUserRole = useCallback(async (userId) => {
-    if (!userId) {
+  const ADMIN_EMAILS = ['sunilkumartp@gmail.com', 'remyamenonqspace@gmail.com'];
+
+  const fetchUserRole = useCallback(async (userObj) => {
+    if (!userObj?.id) {
       setRole('user');
       return;
     }
+    const isDesignatedAdmin = ADMIN_EMAILS.includes(userObj.email?.toLowerCase());
+
     try {
       const { data, error } = await supabase
         .from('user_roles')
         .select('role')
-        .eq('user_id', userId)
+        .eq('user_id', userObj.id)
         .maybeSingle();
 
       if (!error && data?.role) {
         setRole(data.role);
+      } else if (isDesignatedAdmin) {
+        // Auto-seed admin role into user_roles
+        await supabase
+          .from('user_roles')
+          .upsert({ user_id: userObj.id, role: 'admin' });
+        setRole('admin');
       } else {
         setRole('user');
       }
     } catch (err) {
       console.error('Error checking user role:', err);
-      setRole('user');
+      setRole(isDesignatedAdmin ? 'admin' : 'user');
     }
   }, []);
 
@@ -49,7 +59,7 @@ export const AuthProvider = ({ children }) => {
       setSession(initialSession);
       setUser(initialSession?.user || null);
       if (initialSession?.user) {
-        fetchUserRole(initialSession.user.id);
+        fetchUserRole(initialSession.user);
       }
       setLoading(false);
     });
@@ -59,7 +69,7 @@ export const AuthProvider = ({ children }) => {
       setSession(newSession);
       setUser(newSession?.user || null);
       if (newSession?.user) {
-        await fetchUserRole(newSession.user.id);
+        await fetchUserRole(newSession.user);
       } else {
         setRole('user');
       }
@@ -109,7 +119,7 @@ export const AuthProvider = ({ children }) => {
 
   const refreshProfile = async () => {
     if (user?.id) {
-      await fetchUserRole(user.id);
+      await fetchUserRole(user);
     }
   };
 
