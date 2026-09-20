@@ -47,6 +47,23 @@ function App() {
             >
               Workshop Slips
             </button>
+            <a 
+              href="/abacus"
+              style={{ 
+                padding: '8px 16px', 
+                borderRadius: '6px', 
+                border: 'none', 
+                background: 'transparent', 
+                color: 'var(--primary)', 
+                fontWeight: '600', 
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                transition: 'all 0.2s' 
+              }}
+            >
+              Abacus Question Paper Generator &rarr;
+            </a>
           </div>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'white', padding: '6px 12px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>

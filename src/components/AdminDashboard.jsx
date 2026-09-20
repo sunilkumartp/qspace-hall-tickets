@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../db/supabase';
 import { format } from 'date-fns';
 import { ArrowLeft, RefreshCw, BarChart3, FileText, Monitor, Clock } from 'lucide-react';
+import { AdminSamplePapers } from './AdminSamplePapers';
 
 export const AdminDashboard = () => {
   const [logs, setLogs] = useState([]);
@@ -186,6 +187,9 @@ export const AdminDashboard = () => {
             </table>
           </div>
         </div>
+
+        {/* Abacus Grade Sample Papers Governance Section */}
+        <AdminSamplePapers />
       </div>
     </div>
   );
