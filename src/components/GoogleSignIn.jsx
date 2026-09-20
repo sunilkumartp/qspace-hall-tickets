@@ -58,10 +58,7 @@ export const GoogleSignIn = ({ returnTo = '/abacus', message = null }) => {
 
         {error && (
           <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '10px 14px',
+            padding: '12px 14px',
             borderRadius: '8px',
             background: '#fee2e2',
             color: '#dc2626',
@@ -69,8 +66,15 @@ export const GoogleSignIn = ({ returnTo = '/abacus', message = null }) => {
             marginBottom: '20px',
             textAlign: 'left'
           }}>
-            <AlertCircle size={16} style={{ flexShrink: 0 }} />
-            <span>{error}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '600', marginBottom: error.includes('provider is not enabled') ? '4px' : '0' }}>
+              <AlertCircle size={16} style={{ flexShrink: 0 }} />
+              <span>{error.includes('provider is not enabled') ? 'Google Provider Disabled' : error}</span>
+            </div>
+            {error.includes('provider is not enabled') && (
+              <p style={{ margin: '4px 0 0 24px', fontSize: '12px', color: '#991b1b', lineHeight: 1.4 }}>
+                Google OAuth must be enabled in your Supabase Dashboard under <strong>Authentication &gt; Providers &gt; Google</strong>.
+              </p>
+            )}
           </div>
         )}
 
