@@ -84,6 +84,30 @@ test('Math Abacus Question Engine - Unit Tests', async (t) => {
     });
   });
 
+  await t.test('generates BODMAS bracketed questions when includeBodmas is true', () => {
+    const questions = generateQuestionPaperQuestions({
+      grade: 4,
+      count: 40,
+      rulesConfig: mockClass3Rules,
+      sampleMeta: { id: 'mock-sample-4', version: 1, rule_version: 1 },
+      includeBodmas: true
+    });
+
+    // Check that at least some questions feature brackets
+    const bodmasQuestions = questions.filter(q => q.questionText.includes('(') && q.questionText.includes(')'));
+    assert.ok(bodmasQuestions.length > 0, 'No bracketed BODMAS questions were generated');
+
+    bodmasQuestions.forEach(q => {
+      // 4 unique options
+      const uniqueOpts = new Set([q.optionA, q.optionB, q.optionC, q.optionD]);
+      assert.equal(uniqueOpts.size, 4);
+
+      // Verified correct answer matches chosen option
+      assert.equal(q[`option${q.correctOption}`], q.correctAnswer);
+      assert.equal(q.difficultyMetadata?.bodmas, true);
+    });
+  });
+
   await t.test('throws descriptive error if grade rules are missing', () => {
     assert.throws(() => {
       generateQuestionPaperQuestions({

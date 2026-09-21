@@ -173,6 +173,229 @@ const generateSingleQuestionFromTemplate = (template, grade, sampleMeta) => {
 };
 
 /**
+ * Generates a BODMAS / Order of Operations question with brackets and operator precedence.
+ * Covers brackets and precedence suitable for the selected grade.
+ */
+export const generateBodmasQuestion = (grade, sampleMeta) => {
+  let questionText = '';
+  let correctAnswer = 0;
+  let falsePrecedence = undefined;
+  let pattern = '';
+  const templateName = 'BODMAS (Brackets & Precedence)';
+
+  if (grade <= 2) {
+    // Grade 1 & 2: Addition and Subtraction with brackets
+    const type = randInt(1, 3);
+    if (type === 1) {
+      // (A + B) - C
+      const a = randInt(3, grade === 1 ? 10 : 25);
+      const b = randInt(2, grade === 1 ? 10 : 25);
+      const c = randInt(1, a + b - 1);
+      correctAnswer = (a + b) - c;
+      questionText = `(${a} + ${b}) - ${c} = ?`;
+      pattern = '(A + B) - C';
+    } else if (type === 2) {
+      // A + (B - C)
+      const c = randInt(1, grade === 1 ? 8 : 20);
+      const b = randInt(c + 1, c + (grade === 1 ? 10 : 25));
+      const a = randInt(2, grade === 1 ? 15 : 40);
+      correctAnswer = a + (b - c);
+      questionText = `${a} + (${b} - ${c}) = ?`;
+      pattern = 'A + (B - C)';
+    } else {
+      // A - (B + C)
+      const b = randInt(1, grade === 1 ? 8 : 15);
+      const c = randInt(1, grade === 1 ? 8 : 15);
+      const a = randInt(b + c + 1, b + c + (grade === 1 ? 15 : 35));
+      correctAnswer = a - (b + c);
+      falsePrecedence = (a - b) + c; // Common sign mistake when removing brackets
+      questionText = `${a} - (${b} + ${c}) = ?`;
+      pattern = 'A - (B + C)';
+    }
+  } else if (grade <= 4) {
+    // Grade 3 & 4: Addition, Subtraction, Multiplication, and Division with brackets
+    const type = randInt(1, 6);
+    if (type === 1) {
+      // (A + B) × C
+      const a = randInt(2, 15);
+      const b = randInt(2, 15);
+      const c = randInt(2, 8);
+      correctAnswer = (a + b) * c;
+      falsePrecedence = a + (b * c); // Precedence mistake: forgetting brackets
+      questionText = `(${a} + ${b}) × ${c} = ?`;
+      pattern = '(A + B) × C';
+    } else if (type === 2) {
+      // A + (B × C)
+      const b = randInt(2, 10);
+      const c = randInt(2, 8);
+      const a = randInt(5, 40);
+      correctAnswer = a + (b * c);
+      falsePrecedence = (a + b) * c; // Left-to-right mistake: ignoring precedence
+      questionText = `${a} + (${b} × ${c}) = ?`;
+      pattern = 'A + (B × C)';
+    } else if (type === 3) {
+      // (A - B) × C
+      const b = randInt(2, 12);
+      const a = randInt(b + 2, b + 20);
+      const c = randInt(2, 8);
+      correctAnswer = (a - b) * c;
+      falsePrecedence = Math.abs(a - (b * c));
+      questionText = `(${a} - ${b}) × ${c} = ?`;
+      pattern = '(A - B) × C';
+    } else if (type === 4) {
+      // A × (B + C)
+      const a = randInt(2, 8);
+      const b = randInt(2, 12);
+      const c = randInt(2, 12);
+      correctAnswer = a * (b + c);
+      falsePrecedence = (a * b) + c;
+      questionText = `${a} × (${b} + ${c}) = ?`;
+      pattern = 'A × (B + C)';
+    } else if (type === 5) {
+      // (A + B) ÷ C
+      const c = randInt(2, 6);
+      const quotient = randInt(2, 12);
+      const total = c * quotient;
+      const a = randInt(1, total - 1);
+      const b = total - a;
+      correctAnswer = quotient;
+      questionText = `(${a} + ${b}) ÷ ${c} = ?`;
+      pattern = '(A + B) ÷ C';
+    } else {
+      // A + (B ÷ C)
+      const c = randInt(2, 6);
+      const quotient = randInt(2, 10);
+      const b = c * quotient;
+      const a = randInt(5, 30);
+      correctAnswer = a + quotient;
+      falsePrecedence = Math.floor((a + b) / c);
+      questionText = `${a} + (${b} ÷ ${c}) = ?`;
+      pattern = 'A + (B ÷ C)';
+    }
+  } else {
+    // Grade 5 to 8: Advanced BODMAS with multiple brackets and mixed precedence
+    const type = randInt(1, 6);
+    if (type === 1) {
+      // (A + B) × (C - D)
+      const d = randInt(2, 8);
+      const c = randInt(d + 1, d + 10);
+      const a = randInt(5, 25);
+      const b = randInt(5, 25);
+      correctAnswer = (a + b) * (c - d);
+      questionText = `(${a} + ${b}) × (${c} - ${d}) = ?`;
+      pattern = '(A + B) × (C - D)';
+    } else if (type === 2) {
+      // (A × B) + (C × D)
+      const a = randInt(3, 15);
+      const b = randInt(2, 10);
+      const c = randInt(3, 15);
+      const d = randInt(2, 10);
+      correctAnswer = (a * b) + (c * d);
+      questionText = `(${a} × ${b}) + (${c} × ${d}) = ?`;
+      pattern = '(A × B) + (C × D)';
+    } else if (type === 3) {
+      // A + (B × C) - D
+      const b = randInt(3, 12);
+      const c = randInt(2, 10);
+      const a = randInt(10, 50);
+      const d = randInt(1, Math.min(25, Math.max(1, a + (b * c) - 1)));
+      correctAnswer = a + (b * c) - d;
+      falsePrecedence = ((a + b) * c) - d;
+      questionText = `${a} + (${b} × ${c}) - ${d} = ?`;
+      pattern = 'A + (B × C) - D';
+    } else if (type === 4) {
+      // (A - B) × (C + D)
+      const b = randInt(2, 12);
+      const a = randInt(b + 2, b + 20);
+      const c = randInt(3, 15);
+      const d = randInt(2, 10);
+      correctAnswer = (a - b) * (c + d);
+      questionText = `(${a} - ${b}) × (${c} + ${d}) = ?`;
+      pattern = '(A - B) × (C + D)';
+    } else if (type === 5) {
+      // (A × B) ÷ C + D
+      const c = randInt(2, 8);
+      const quotient = randInt(2, 15);
+      const mult = c * quotient;
+      let a = c;
+      let b = quotient;
+      if (mult % 2 === 0 && mult > 4) {
+        a = 2;
+        b = mult / 2;
+      }
+      const d = randInt(2, 25);
+      correctAnswer = quotient + d;
+      questionText = `(${a} × ${b}) ÷ ${c} + ${d} = ?`;
+      pattern = '(A × B) ÷ C + D';
+    } else {
+      // (A + B) × C - D
+      const a = randInt(3, 15);
+      const b = randInt(2, 15);
+      const c = randInt(2, 8);
+      const prod = (a + b) * c;
+      const d = randInt(2, Math.min(30, Math.max(3, prod - 1)));
+      correctAnswer = prod - d;
+      falsePrecedence = a + (b * c) - d;
+      questionText = `(${a} + ${b}) × ${c} - ${d} = ?`;
+      pattern = '(A + B) × C - D';
+    }
+  }
+
+  // Construct distractors: include falsePrecedence if available, plus standard plausible abacus distractors
+  const distractors = new Set();
+  if (falsePrecedence !== undefined && falsePrecedence !== correctAnswer && falsePrecedence >= 0) {
+    distractors.add(falsePrecedence);
+  }
+
+  const standard = generatePlausibleDistractors(correctAnswer, { no_negative: true }, grade);
+  for (const d of standard) {
+    if (distractors.size >= 3) break;
+    if (d !== correctAnswer && d >= 0) {
+      distractors.add(d);
+    }
+  }
+
+  let fallbackVal = Math.max(1, correctAnswer + 3);
+  while (distractors.size < 3) {
+    if (fallbackVal !== correctAnswer && !distractors.has(fallbackVal)) {
+      distractors.add(fallbackVal);
+    }
+    fallbackVal++;
+  }
+
+  const distArray = Array.from(distractors).slice(0, 3);
+  const allChoices = shuffle([
+    { text: String(correctAnswer), isCorrect: true },
+    { text: String(distArray[0]), isCorrect: false },
+    { text: String(distArray[1]), isCorrect: false },
+    { text: String(distArray[2]), isCorrect: false }
+  ]);
+
+  const correctIndex = allChoices.findIndex(c => c.isCorrect);
+  const correctOption = ['A', 'B', 'C', 'D'][correctIndex];
+
+  return {
+    questionText,
+    optionA: allChoices[0].text,
+    optionB: allChoices[1].text,
+    optionC: allChoices[2].text,
+    optionD: allChoices[3].text,
+    correctAnswer: String(correctAnswer),
+    correctOption,
+    difficultyMetadata: {
+      grade,
+      bodmas: true,
+      pattern,
+      sampleDocId: sampleMeta?.id,
+      sampleDocVersion: sampleMeta?.version,
+      ruleVersion: sampleMeta?.rule_version
+    },
+    sourceTemplate: templateName,
+    sourcePattern: pattern
+  };
+};
+
+/**
  * Main Question Paper Generator
  * Generates an array of `count` unique multiple-choice questions for the given grade.
  */
@@ -180,7 +403,8 @@ export const generateQuestionPaperQuestions = ({
   grade,
   count = 100,
   rulesConfig,
-  sampleMeta
+  sampleMeta,
+  includeBodmas = false
 }) => {
   if (!rulesConfig || !rulesConfig.templates || rulesConfig.templates.length === 0) {
     throw new Error(`No active generation rules found for Grade ${grade}. Administrator must configure and approve sample paper.`);
@@ -189,17 +413,25 @@ export const generateQuestionPaperQuestions = ({
   const questions = [];
   const seenTexts = new Set();
   const templates = rulesConfig.templates;
-  const maxAttempts = count * 15;
+  const maxAttempts = count * 20;
   let attempts = 0;
+
+  // When includeBodmas is enabled, aim for approximately 35% of questions with BODMAS brackets
+  const bodmasRatio = includeBodmas ? 0.35 : 0;
 
   while (questions.length < count && attempts < maxAttempts) {
     attempts++;
 
-    // Pick a template according to its weight or uniformly
-    const templateIndex = Math.floor(Math.random() * templates.length);
-    const template = templates[templateIndex];
+    let q;
+    const shouldGenerateBodmas = includeBodmas && (Math.random() < bodmasRatio || (questions.length === 0 && count > 1));
 
-    const q = generateSingleQuestionFromTemplate(template, grade, sampleMeta);
+    if (shouldGenerateBodmas) {
+      q = generateBodmasQuestion(grade, sampleMeta);
+    } else {
+      const templateIndex = Math.floor(Math.random() * templates.length);
+      const template = templates[templateIndex];
+      q = generateSingleQuestionFromTemplate(template, grade, sampleMeta);
+    }
 
     // Ensure uniqueness within paper
     if (!seenTexts.has(q.questionText)) {

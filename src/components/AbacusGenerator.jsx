@@ -27,6 +27,7 @@ export const AbacusGenerator = () => {
   const [questionCount, setQuestionCount] = useState(100);
   const [title, setTitle] = useState('Brain wave context:Round 3 Practice Questions Class 1 - QP1');
   const [paperCode, setPaperCode] = useState('C1QP1');
+  const [includeBodmas, setIncludeBodmas] = useState(false);
 
   // Sample papers and readiness state
   const [activeSamples, setActiveSamples] = useState([]);
@@ -128,7 +129,8 @@ export const AbacusGenerator = () => {
         grade,
         count: questionCount,
         rulesConfig: selectedGradeSample.extracted_rules,
-        sampleMeta: selectedGradeSample
+        sampleMeta: selectedGradeSample,
+        includeBodmas
       });
 
       setGeneratedPaper({
@@ -137,6 +139,7 @@ export const AbacusGenerator = () => {
         setNumber,
         paperCode,
         questionCount,
+        includeBodmas,
         questions,
         sampleMeta: selectedGradeSample
       });
@@ -156,7 +159,8 @@ export const AbacusGenerator = () => {
         grade,
         count: 1,
         rulesConfig: selectedGradeSample.extracted_rules,
-        sampleMeta: selectedGradeSample
+        sampleMeta: selectedGradeSample,
+        includeBodmas: generatedPaper.includeBodmas
       })[0];
 
       const updatedQuestions = [...generatedPaper.questions];
@@ -483,6 +487,58 @@ export const AbacusGenerator = () => {
                 onChange={(e) => setPaperCode(e.target.value)}
                 style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '14px' }}
               />
+            </div>
+          </div>
+
+          {/* BODMAS Checkbox Option */}
+          <div
+            style={{
+              background: includeBodmas ? '#eff6ff' : '#f8fafc',
+              border: includeBodmas ? '1.5px solid var(--primary)' : '1px solid var(--border-color)',
+              borderRadius: '10px',
+              padding: '14px 18px',
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '12px',
+              cursor: allGradesReady ? 'pointer' : 'not-allowed',
+              transition: 'all 0.2s ease'
+            }}
+            onClick={(e) => {
+              if (e.target.tagName !== 'INPUT' && allGradesReady) {
+                setIncludeBodmas(!includeBodmas);
+              }
+            }}
+          >
+            <input
+              type="checkbox"
+              id="includeBodmas"
+              checked={includeBodmas}
+              disabled={!allGradesReady}
+              onChange={(e) => setIncludeBodmas(e.target.checked)}
+              style={{
+                marginTop: '3px',
+                width: '18px',
+                height: '18px',
+                cursor: allGradesReady ? 'pointer' : 'not-allowed',
+                accentColor: 'var(--primary)'
+              }}
+            />
+            <div>
+              <label
+                htmlFor="includeBodmas"
+                style={{
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  color: 'var(--text-main)',
+                  cursor: allGradesReady ? 'pointer' : 'not-allowed',
+                  display: 'block'
+                }}
+              >
+                Apply BODMAS Rules (Brackets &amp; Operator Precedence)
+              </label>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '2px 0 0 0', lineHeight: 1.4 }}>
+                Randomly applies brackets and order-of-precedence operations (e.g. <code>(A + B) × C</code>, <code>A + (B × C)</code>, <code>(A + B) ÷ C</code>) to mathematical equations in the question paper.
+              </p>
             </div>
           </div>
 
