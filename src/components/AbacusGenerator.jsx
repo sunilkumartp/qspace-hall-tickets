@@ -28,6 +28,7 @@ export const AbacusGenerator = () => {
   const [title, setTitle] = useState('Brain wave context:Round 3 Practice Questions Class 1 - QP1');
   const [paperCode, setPaperCode] = useState('C1QP1');
   const [includeBodmas, setIncludeBodmas] = useState(false);
+  const [bodmasPercentage, setBodmasPercentage] = useState(30);
 
   // Sample papers and readiness state
   const [activeSamples, setActiveSamples] = useState([]);
@@ -130,7 +131,8 @@ export const AbacusGenerator = () => {
         count: questionCount,
         rulesConfig: selectedGradeSample.extracted_rules,
         sampleMeta: selectedGradeSample,
-        includeBodmas
+        includeBodmas,
+        bodmasPercentage: includeBodmas ? bodmasPercentage : 0
       });
 
       setGeneratedPaper({
@@ -140,6 +142,7 @@ export const AbacusGenerator = () => {
         paperCode,
         questionCount,
         includeBodmas,
+        bodmasPercentage: includeBodmas ? bodmasPercentage : 0,
         questions,
         sampleMeta: selectedGradeSample
       });
@@ -160,7 +163,8 @@ export const AbacusGenerator = () => {
         count: 1,
         rulesConfig: selectedGradeSample.extracted_rules,
         sampleMeta: selectedGradeSample,
-        includeBodmas: generatedPaper.includeBodmas
+        includeBodmas: generatedPaper.includeBodmas,
+        bodmasPercentage: generatedPaper.bodmasPercentage
       })[0];
 
       const updatedQuestions = [...generatedPaper.questions];
@@ -539,6 +543,90 @@ export const AbacusGenerator = () => {
               <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '2px 0 0 0', lineHeight: 1.4 }}>
                 Randomly applies brackets and order-of-precedence operations (e.g. <code>(A + B) × C</code>, <code>A + (B × C)</code>, <code>(A + B) ÷ C</code>) to mathematical equations in the question paper.
               </p>
+
+              {/* Percentage Controls (visible when BODMAS is enabled) */}
+              {includeBodmas && (
+                <div
+                  style={{
+                    marginTop: '14px',
+                    paddingTop: '12px',
+                    borderTop: '1px solid #dbeafe',
+                    cursor: 'default'
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <label htmlFor="bodmasPercentage" style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-main)' }}>
+                      Percentage of Questions with Brackets:
+                    </label>
+                    <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--primary)' }}>
+                      {bodmasPercentage}% (~{Math.round((questionCount * bodmasPercentage) / 100)} of {questionCount} questions)
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <input
+                      type="range"
+                      min="5"
+                      max="100"
+                      step="5"
+                      id="bodmasPercentage"
+                      value={bodmasPercentage}
+                      disabled={!allGradesReady}
+                      onChange={(e) => setBodmasPercentage(parseInt(e.target.value, 10))}
+                      style={{ flex: 1, accentColor: 'var(--primary)', cursor: allGradesReady ? 'pointer' : 'not-allowed' }}
+                    />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <input
+                        type="number"
+                        min="1"
+                        max="100"
+                        value={bodmasPercentage}
+                        disabled={!allGradesReady}
+                        onChange={(e) => {
+                          const val = Math.max(1, Math.min(100, parseInt(e.target.value, 10) || 0));
+                          setBodmasPercentage(val);
+                        }}
+                        style={{
+                          width: '56px',
+                          padding: '4px 6px',
+                          borderRadius: '6px',
+                          border: '1px solid var(--border-color)',
+                          fontSize: '13px',
+                          textAlign: 'center'
+                        }}
+                      />
+                      <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>%</span>
+                    </div>
+                  </div>
+
+                  {/* Quick percentage presets */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '10px' }}>
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginRight: '2px' }}>Presets:</span>
+                    {[10, 20, 30, 40, 50, 75, 100].map(pct => (
+                      <button
+                        key={pct}
+                        type="button"
+                        onClick={() => setBodmasPercentage(pct)}
+                        disabled={!allGradesReady}
+                        style={{
+                          padding: '3px 8px',
+                          fontSize: '11px',
+                          fontWeight: bodmasPercentage === pct ? '700' : '500',
+                          borderRadius: '6px',
+                          border: bodmasPercentage === pct ? '1px solid var(--primary)' : '1px solid #cbd5e1',
+                          background: bodmasPercentage === pct ? 'var(--primary)' : '#ffffff',
+                          color: bodmasPercentage === pct ? '#ffffff' : '#475569',
+                          cursor: allGradesReady ? 'pointer' : 'not-allowed',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        {pct}%
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

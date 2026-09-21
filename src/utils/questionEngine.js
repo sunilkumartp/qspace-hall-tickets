@@ -398,48 +398,53 @@ export const generateBodmasQuestion = (grade, sampleMeta) => {
 /**
  * Main Question Paper Generator
  * Generates an array of `count` unique multiple-choice questions for the given grade.
+ * Supports configurable BODMAS percentage (e.g. 30%) with randomized distribution across the paper.
  */
 export const generateQuestionPaperQuestions = ({
   grade,
   count = 100,
   rulesConfig,
   sampleMeta,
-  includeBodmas = false
+  includeBodmas = false,
+  bodmasPercentage = 30
 }) => {
   if (!rulesConfig || !rulesConfig.templates || rulesConfig.templates.length === 0) {
     throw new Error(`No active generation rules found for Grade ${grade}. Administrator must configure and approve sample paper.`);
   }
 
+  // Calculate exact target BODMAS question count based on user-defined percentage
+  const clampedPercent = Math.max(0, Math.min(100, Number(bodmasPercentage) || 0));
+  const targetBodmasCount = includeBodmas && clampedPercent > 0
+    ? Math.min(count, Math.max(1, Math.round((count * clampedPercent) / 100)))
+    : 0;
+
   const questions = [];
   const seenTexts = new Set();
   const templates = rulesConfig.templates;
-  const maxAttempts = count * 20;
+  const maxAttempts = count * 25;
   let attempts = 0;
 
-  // When includeBodmas is enabled, aim for approximately 35% of questions with BODMAS brackets
-  const bodmasRatio = includeBodmas ? 0.35 : 0;
-
-  while (questions.length < count && attempts < maxAttempts) {
+  // 1. Generate target number of unique BODMAS bracketed questions
+  let bodmasGenerated = 0;
+  while (bodmasGenerated < targetBodmasCount && attempts < maxAttempts) {
     attempts++;
-
-    let q;
-    const shouldGenerateBodmas = includeBodmas && (Math.random() < bodmasRatio || (questions.length === 0 && count > 1));
-
-    if (shouldGenerateBodmas) {
-      q = generateBodmasQuestion(grade, sampleMeta);
-    } else {
-      const templateIndex = Math.floor(Math.random() * templates.length);
-      const template = templates[templateIndex];
-      q = generateSingleQuestionFromTemplate(template, grade, sampleMeta);
-    }
-
-    // Ensure uniqueness within paper
+    const q = generateBodmasQuestion(grade, sampleMeta);
     if (!seenTexts.has(q.questionText)) {
       seenTexts.add(q.questionText);
-      questions.push({
-        questionNumber: questions.length + 1,
-        ...q
-      });
+      questions.push(q);
+      bodmasGenerated++;
+    }
+  }
+
+  // 2. Generate remaining standard questions
+  while (questions.length < count && attempts < maxAttempts) {
+    attempts++;
+    const templateIndex = Math.floor(Math.random() * templates.length);
+    const template = templates[templateIndex];
+    const q = generateSingleQuestionFromTemplate(template, grade, sampleMeta);
+    if (!seenTexts.has(q.questionText)) {
+      seenTexts.add(q.questionText);
+      questions.push(q);
     }
   }
 
@@ -450,11 +455,17 @@ export const generateQuestionPaperQuestions = ({
     const q = generateSingleQuestionFromTemplate(template, grade, sampleMeta);
     const uniqueText = `${q.questionText} (variant ${safetyCounter++})`;
     questions.push({
-      questionNumber: questions.length + 1,
       ...q,
       questionText: uniqueText
     });
   }
 
-  return questions;
+  // 3. Shuffle so the BODMAS questions are randomly distributed across the question paper
+  const randomizedQuestions = shuffle(questions);
+
+  // 4. Assign sequential question numbers Q1), Q2), ..., Qn)
+  return randomizedQuestions.map((q, idx) => ({
+    ...q,
+    questionNumber: idx + 1
+  }));
 };
