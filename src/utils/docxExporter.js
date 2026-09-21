@@ -78,13 +78,15 @@ export const exportQuestionPaperToDocx = async ({
 
   // Append each question with 4 options and bold+underlined answer
   questions.forEach((q, index) => {
+    const qNum = `Q${index + 1})`;
+
     // Question text paragraph
     children.push(
       new Paragraph({
         spacing: { before: 140, after: 80 },
         children: [
           new TextRun({
-            text: `Q${index + 1}.  ${q.questionText}`,
+            text: `${qNum}  ${q.questionText}`,
             bold: true,
             size: 24, // 12pt
             font: 'Calibri'
@@ -93,16 +95,16 @@ export const exportQuestionPaperToDocx = async ({
       })
     );
 
-    // Options row / paragraph
+    // Options row: four separate option values without alphabetic prefixes or labels
     children.push(
       new Paragraph({
         spacing: { after: 60 },
         indent: { left: 400 },
         children: [
-          new TextRun({ text: `(A)  ${q.optionA}        `, size: 22, font: 'Calibri' }),
-          new TextRun({ text: `(B)  ${q.optionB}        `, size: 22, font: 'Calibri' }),
-          new TextRun({ text: `(C)  ${q.optionC}        `, size: 22, font: 'Calibri' }),
-          new TextRun({ text: `(D)  ${q.optionD}`, size: 22, font: 'Calibri' })
+          new TextRun({ text: `${q.optionA}        `, size: 22, font: 'Calibri' }),
+          new TextRun({ text: `${q.optionB}        `, size: 22, font: 'Calibri' }),
+          new TextRun({ text: `${q.optionC}        `, size: 22, font: 'Calibri' }),
+          new TextRun({ text: `${q.optionD}`, size: 22, font: 'Calibri' })
         ]
       })
     );
@@ -114,7 +116,7 @@ export const exportQuestionPaperToDocx = async ({
         indent: { left: 400 },
         children: [
           new TextRun({
-            text: `Ans: ${q.correctAnswer} (Option ${q.correctOption})`,
+            text: `Ans: ${q.correctAnswer}`,
             bold: true,
             underline: { type: UnderlineType.SINGLE },
             size: 22,

@@ -70,20 +70,22 @@ export const createGoogleQuizForm = async ({
 
   // 3. Append question items
   questions.forEach((q, idx) => {
+    const qNum = `Q${idx + 1})`;
+
     requests.push({
       createItem: {
         item: {
-          title: `Q${idx + 1}.  ${q.questionText}`,
+          title: `${qNum}  ${q.questionText}`,
           questionItem: {
             question: {
               required: true,
               choiceQuestion: {
                 type: 'RADIO',
                 options: [
-                  { value: `(A) ${q.optionA}` },
-                  { value: `(B) ${q.optionB}` },
-                  { value: `(C) ${q.optionC}` },
-                  { value: `(D) ${q.optionD}` }
+                  { value: String(q.optionA) },
+                  { value: String(q.optionB) },
+                  { value: String(q.optionC) },
+                  { value: String(q.optionD) }
                 ],
                 shuffle: false
               },
@@ -91,7 +93,7 @@ export const createGoogleQuizForm = async ({
                 pointValue: 1,
                 correctAnswers: {
                   answers: [
-                    { value: `(${q.correctOption}) ${q.correctAnswer}` }
+                    { value: String(q.correctAnswer) }
                   ]
                 }
               }

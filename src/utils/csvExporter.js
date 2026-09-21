@@ -40,16 +40,16 @@ export const exportQuestionPaperToCsv = ({
   rows.push(['']); // Blank separator line
 
   // Multi-row question layout per specification:
-  // For every question: question text and 4 answer options on consecutive rows,
-  // followed immediately by "Ans: {answer}" on its own row.
+  // For every question: question text and 4 separate option values on consecutive rows,
+  // followed immediately by "Ans: {answer}" on its own row without alphabetic labels.
   questions.forEach((q, idx) => {
-    const qNum = `Q${idx + 1}`;
+    const qNum = `Q${idx + 1})`;
     rows.push([escapeCsvField(qNum), escapeCsvField(q.questionText)]);
-    rows.push([escapeCsvField('Option A'), escapeCsvField(q.optionA)]);
-    rows.push([escapeCsvField('Option B'), escapeCsvField(q.optionB)]);
-    rows.push([escapeCsvField('Option C'), escapeCsvField(q.optionC)]);
-    rows.push([escapeCsvField('Option D'), escapeCsvField(q.optionD)]);
-    rows.push([escapeCsvField('Ans:'), escapeCsvField(`${q.correctAnswer} (Option ${q.correctOption})`)]);
+    rows.push(['', escapeCsvField(q.optionA)]);
+    rows.push(['', escapeCsvField(q.optionB)]);
+    rows.push(['', escapeCsvField(q.optionC)]);
+    rows.push(['', escapeCsvField(q.optionD)]);
+    rows.push([escapeCsvField('Ans:'), escapeCsvField(q.correctAnswer)]);
     rows.push(['']); // Blank row between questions
   });
 

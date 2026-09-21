@@ -504,7 +504,7 @@ export const AbacusReview = ({
                     display: 'inline-flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    width: '28px',
+                    padding: '0 8px',
                     height: '28px',
                     borderRadius: '6px',
                     background: 'var(--primary-light)',
@@ -512,7 +512,7 @@ export const AbacusReview = ({
                     fontWeight: '700',
                     fontSize: '13px'
                   }}>
-                    {index + 1}
+                    Q{index + 1})
                   </span>
 
                   {isEditing ? (
@@ -556,7 +556,7 @@ export const AbacusReview = ({
                 </div>
               </div>
 
-              {/* Options Grid */}
+              {/* Options Grid: four separate option values without alphabetic prefixes or labels */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', marginBottom: '12px' }}>
                 {['A', 'B', 'C', 'D'].map(optKey => {
                   const fieldName = `option${optKey}`;
@@ -571,18 +571,16 @@ export const AbacusReview = ({
                         borderRadius: '8px',
                         background: showAnswers && isCorrect ? '#f0fdf4' : '#f8fafc',
                         border: showAnswers && isCorrect ? '1.5px solid #22c55e' : '1px solid #e2e8f0',
-                        fontSize: '13px'
+                        fontSize: '13px',
+                        textAlign: 'center'
                       }}
                     >
-                      <span style={{ fontWeight: '700', marginRight: '6px', color: showAnswers && isCorrect ? '#166534' : '#64748b' }}>
-                        ({optKey})
-                      </span>
                       {isEditing ? (
                         <input
                           type="text"
                           value={optVal}
                           onChange={(e) => handleUpdateQuestion(index, fieldName, e.target.value)}
-                          style={{ width: '60px', padding: '2px 4px', border: '1px solid #cbd5e1', borderRadius: '4px' }}
+                          style={{ width: '80px', padding: '4px 6px', border: '1px solid #cbd5e1', borderRadius: '4px', textAlign: 'center' }}
                         />
                       ) : (
                         <span style={{ fontWeight: showAnswers && isCorrect ? '700' : '500', color: showAnswers && isCorrect ? '#166534' : 'var(--text-main)' }}>
@@ -598,9 +596,8 @@ export const AbacusReview = ({
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: 'var(--text-muted)', paddingTop: '8px', borderTop: '1px solid #f1f5f9' }}>
                 {showAnswers ? (
                   <div>
-                    <strong>Answer: </strong>
                     <span style={{ color: '#16a34a', fontWeight: '700', textDecoration: 'underline' }}>
-                      Option {q.correctOption} ({q.correctAnswer})
+                      Ans: {q.correctAnswer}
                     </span>
                   </div>
                 ) : (
