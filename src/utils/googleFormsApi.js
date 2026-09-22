@@ -78,7 +78,7 @@ export const createGoogleQuizForm = async ({
           title: `${qNum}  ${q.questionText}`,
           questionItem: {
             question: {
-              required: true,
+              required: false,
               choiceQuestion: {
                 type: 'RADIO',
                 options: [
