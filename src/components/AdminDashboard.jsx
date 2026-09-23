@@ -1,10 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../db/supabase';
-import { format } from 'date-fns';
-import { ArrowLeft, RefreshCw, BarChart3, FileText, Monitor, Clock } from 'lucide-react';
+import { useAuth } from './AuthProvider';
+import { GoogleSignIn } from './GoogleSignIn';
 import { AdminSamplePapers } from './AdminSamplePapers';
+import { AdminUserManagement } from './AdminUserManagement';
+import { format } from 'date-fns';
+import { ArrowLeft, RefreshCw, BarChart3, FileText, Monitor, Clock, ShieldAlert } from 'lucide-react';
 
 export const AdminDashboard = () => {
+  const { user, isAdmin, loading: authLoading, signOut } = useAuth();
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -64,6 +68,65 @@ export const AdminDashboard = () => {
       osList
     };
   }, [logs]);
+
+  // Auth Protection: Check loading, login status, and admin rights
+  if (authLoading) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f172a', color: '#94a3b8' }}>
+        <p>Checking administrator credentials...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div style={{ minHeight: '100vh', background: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <GoogleSignIn 
+          returnTo="/admin" 
+          title="QSpace Admin Portal" 
+          subtitle="Sign in with your Google administrator account." 
+        />
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div style={{ minHeight: '100vh', background: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+        <div style={{ maxWidth: '440px', width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: '16px', padding: '36px 28px', textAlign: 'center' }}>
+          <div style={{ width: '56px', height: '56px', borderRadius: '16px', background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
+            <ShieldAlert size={32} />
+          </div>
+          <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#f8fafc', marginBottom: '8px' }}>
+            Administrator Access Required
+          </h2>
+          <p style={{ fontSize: '14px', color: '#94a3b8', lineHeight: 1.5, marginBottom: '24px' }}>
+            Your account ({user.email}) does not have administrator privileges. Please contact <strong>remyasunil@gmail.com</strong> if you require access.
+          </p>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <a
+              href="/"
+              style={{
+                flex: 1, padding: '10px 16px', borderRadius: '8px', background: '#2563eb', color: 'white',
+                fontWeight: '600', fontSize: '13px', textDecoration: 'none', display: 'inline-block'
+              }}
+            >
+              Return to Home
+            </a>
+            <button
+              onClick={signOut}
+              style={{
+                flex: 1, padding: '10px 16px', borderRadius: '8px', background: '#334155', color: '#e2e8f0',
+                border: 'none', fontWeight: '600', fontSize: '13px', cursor: 'pointer'
+              }}
+            >
+              Sign Out
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ minHeight: '100vh', padding: '40px 20px', background: '#0f172a', color: '#e2e8f0' }}>
@@ -187,6 +250,9 @@ export const AdminDashboard = () => {
             </table>
           </div>
         </div>
+
+        {/* Authorized Users Management Section */}
+        <AdminUserManagement />
 
         {/* Abacus Grade Sample Papers Governance Section */}
         <AdminSamplePapers />

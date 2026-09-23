@@ -6,7 +6,9 @@ const AuthContext = createContext({
   session: null,
   role: 'user',
   isAdmin: false,
+  isAllowed: false,
   loading: true,
+  primaryAdminEmail: 'remyasunil@gmail.com',
   signInWithGoogle: async () => {},
   signOut: async () => {},
   refreshProfile: async () => {},
@@ -18,38 +20,77 @@ export const AuthProvider = ({ children }) => {
   const [session, setSession] = useState(null);
   const [user, setUser] = useState(null);
   const [role, setRole] = useState('user');
+  const [isAllowed, setIsAllowed] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const ADMIN_EMAILS = ['sunilkumartp@gmail.com', 'remyamenonqspace@gmail.com'];
+  const PRIMARY_ADMIN_EMAIL = 'remyasunil@gmail.com';
+  const ADMIN_EMAILS = [
+    'remyasunil@gmail.com',
+    'sunilkumartp@gmail.com',
+    'remyamenonqspace@gmail.com'
+  ];
 
   const fetchUserRole = useCallback(async (userObj) => {
-    if (!userObj?.id) {
+    if (!userObj?.id || !userObj?.email) {
       setRole('user');
+      setIsAllowed(false);
       return;
     }
-    const isDesignatedAdmin = ADMIN_EMAILS.includes(userObj.email?.toLowerCase());
+    const userEmail = userObj.email.trim().toLowerCase();
+    const isDesignatedAdmin = ADMIN_EMAILS.includes(userEmail);
+
+    if (isDesignatedAdmin) {
+      setRole('admin');
+      setIsAllowed(true);
+      try {
+        await supabase
+          .from('user_roles')
+          .upsert({ user_id: userObj.id, role: 'admin' });
+      } catch (e) {
+        console.warn('Could not auto-upsert admin in user_roles:', e);
+      }
+      return;
+    }
 
     try {
-      const { data, error } = await supabase
+      // 1. Check if user is in allowed_users whitelist
+      const { data: allowedData, error: allowedError } = await supabase
+        .from('allowed_users')
+        .select('role')
+        .ilike('email', userEmail)
+        .maybeSingle();
+
+      if (!allowedError && allowedData) {
+        const assignedRole = allowedData.role || 'user';
+        setRole(assignedRole);
+        setIsAllowed(true);
+        if (assignedRole === 'admin') {
+          await supabase
+            .from('user_roles')
+            .upsert({ user_id: userObj.id, role: 'admin' });
+        }
+        return;
+      }
+
+      // 2. Fallback check in user_roles table
+      const { data: roleData } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', userObj.id)
         .maybeSingle();
 
-      if (!error && data?.role) {
-        setRole(data.role);
-      } else if (isDesignatedAdmin) {
-        // Auto-seed admin role into user_roles
-        await supabase
-          .from('user_roles')
-          .upsert({ user_id: userObj.id, role: 'admin' });
+      if (roleData?.role === 'admin') {
         setRole('admin');
+        setIsAllowed(true);
       } else {
-        setRole('user');
+        // User is authenticated with Google but NOT authorized/whitelisted
+        setRole('unauthorized');
+        setIsAllowed(false);
       }
     } catch (err) {
-      console.error('Error checking user role:', err);
-      setRole(isDesignatedAdmin ? 'admin' : 'user');
+      console.error('Error verifying user authorization:', err);
+      setRole('unauthorized');
+      setIsAllowed(false);
     }
   }, []);
 
@@ -81,7 +122,7 @@ export const AuthProvider = ({ children }) => {
     };
   }, [fetchUserRole]);
 
-  const signInWithGoogle = async (returnTo = '/abacus') => {
+  const signInWithGoogle = async (returnTo = '/') => {
     const origin = window.location.origin;
     const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent(returnTo)}`;
 
@@ -115,6 +156,7 @@ export const AuthProvider = ({ children }) => {
     setSession(null);
     setUser(null);
     setRole('user');
+    setIsAllowed(false);
   };
 
   const refreshProfile = async () => {
@@ -128,7 +170,10 @@ export const AuthProvider = ({ children }) => {
     session,
     role,
     isAdmin: role === 'admin',
+    isAllowed,
     loading,
+    primaryAdminEmail: PRIMARY_ADMIN_EMAIL,
+    adminEmails: ADMIN_EMAILS,
     signInWithGoogle,
     signOut,
     refreshProfile

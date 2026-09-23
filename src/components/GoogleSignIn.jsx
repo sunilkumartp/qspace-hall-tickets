@@ -2,7 +2,12 @@ import React, { useState } from 'react';
 import { useAuth } from './AuthProvider';
 import { LogIn, AlertCircle, ShieldCheck } from 'lucide-react';
 
-export const GoogleSignIn = ({ returnTo = '/abacus', message = null }) => {
+export const GoogleSignIn = ({ 
+  returnTo = '/', 
+  title = 'QSpace Academy',
+  subtitle = 'Sign in with your Google account to access Hall Tickets, Workshop Slips, and Abacus Practice Generator.',
+  message = null 
+}) => {
   const { signInWithGoogle } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -49,11 +54,11 @@ export const GoogleSignIn = ({ returnTo = '/abacus', message = null }) => {
         </div>
 
         <h2 style={{ fontSize: '24px', fontWeight: '700', marginBottom: '8px', color: 'var(--text-main)' }}>
-          Abacus Question Paper Generator
+          {title}
         </h2>
         
         <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginBottom: '24px', lineHeight: 1.5 }}>
-          {message || 'Sign in with your Google account to access, generate, review, and export abacus practice question papers for Classes 1 to 8.'}
+          {message || subtitle}
         </p>
 
         {error && (

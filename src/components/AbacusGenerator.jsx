@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../db/supabase';
 import { useAuth } from './AuthProvider';
 import { GoogleSignIn } from './GoogleSignIn';
+import { AccessRestricted } from './AccessRestricted';
+import { NavBar } from './NavBar';
 import { AbacusReview } from './AbacusReview';
 import { generateQuestionPaperQuestions } from '../utils/questionEngine';
 import { 
@@ -19,7 +21,7 @@ import {
 } from 'lucide-react';
 
 export const AbacusGenerator = () => {
-  const { user, session, isAdmin, signOut, loading: authLoading } = useAuth();
+  const { user, session, isAdmin, isAllowed, signOut, loading: authLoading } = useAuth();
 
   // Generator form state
   const [grade, setGrade] = useState(1);
@@ -210,23 +212,41 @@ export const AbacusGenerator = () => {
 
   // 2. Unauthenticated: Google Sign-in screen required immediately
   if (!user) {
-    return <GoogleSignIn returnTo="/abacus" />;
-  }
-
-  // 3. Review Mode View
-  if (generatedPaper) {
     return (
-      <AbacusReview
-        paperData={generatedPaper}
-        onBack={() => setGeneratedPaper(null)}
-        onRegenerateSingle={handleRegenerateSingleQuestion}
+      <GoogleSignIn 
+        returnTo="/abacus" 
+        title="QSpace Abacus Generator" 
+        subtitle="Sign in with your Google account to access, generate, review, and export abacus practice question papers."
       />
     );
   }
 
-  // 4. Generator Form View
+  // 3. Authenticated but unauthorized
+  if (!isAllowed) {
+    return <AccessRestricted />;
+  }
+
+  // 4. Review Mode View
+  if (generatedPaper) {
+    return (
+      <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
+        <NavBar currentPath="/abacus" />
+        <div style={{ padding: '24px 20px 60px' }}>
+          <AbacusReview
+            paperData={generatedPaper}
+            onBack={() => setGeneratedPaper(null)}
+            onRegenerateSingle={handleRegenerateSingleQuestion}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // 5. Generator Form View
   return (
-    <div style={{ maxWidth: '900px', margin: '0 auto', paddingBottom: '60px' }}>
+    <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
+      <NavBar currentPath="/abacus" />
+      <div style={{ maxWidth: '900px', margin: '0 auto', padding: '32px 20px 60px' }}>
       {/* Authenticated User Header */}
       <div style={{
         display: 'flex',
@@ -659,6 +679,7 @@ export const AbacusGenerator = () => {
             </button>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );
