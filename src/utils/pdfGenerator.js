@@ -292,7 +292,7 @@ export const generateHallTicket = async (students, options = {}) => {
 
     pdf.setFont("helvetica", "normal");
     pdf.setTextColor(74, 74, 74);
-    const reqNotice = "Send a WhatsApp message to the same number from which this Hall Ticket was received, in the following format:";
+    const reqNotice = "Send a WhatsApp message to any of the numbers mentioned below, in the following format:";
     const reqNoticeLines = pdf.splitTextToSize(reqNotice, CONTENT_W - 20);
     pdf.text(reqNoticeLines, MARGIN + 14, y);
     y += reqNoticeLines.length * 4.6 + 2.0;
