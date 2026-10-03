@@ -237,7 +237,7 @@ export const generateHallTicket = async (students, options = {}) => {
     y += 5.5;
 
     drawMixedInstruction(y, [
-      { text: "Certificates will be provided to all participants.", bold: false }
+      { text: "Round 1 winner certificates will be provided to all participants.", bold: false }
     ]);
     y += 6.5;
 
