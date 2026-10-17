@@ -329,9 +329,7 @@ export const generateHallTicket = async (students, options = {}) => {
 
       pdf.setFont("helvetica", "normal");
       pdf.setTextColor(51, 51, 51);
-      const egFrom = validSlots.length > 1 ? validSlots[1] : (validSlots[0] || "11:30 AM");
-      const egTo = validSlots.length > 2 ? validSlots[2] : (validSlots[1] || "2:30 PM");
-      pdf.text(`Ananya – Change timing from ${egFrom} to ${egTo}`, MARGIN + 14, y);
+      pdf.text("Ananya – Change timing from 11:30 AM to 2:30 PM", MARGIN + 14, y);
       y += 5.5;
     }
 
