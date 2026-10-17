@@ -1,11 +1,17 @@
 import { jsPDF } from 'jspdf';
 
 export const generateHallTicket = async (students, options = {}) => {
-  const { onProgress, signal } = options;
+  const { onProgress, signal, slots } = options;
   
   if (!students || students.length === 0) {
     throw new Error("No students provided.");
   }
+
+  // If slots is provided (even if []), use it; otherwise default to the standard 3 slots
+  const rawSlots = slots !== undefined ? slots : ['9:00 AM', '11:30 AM', '2:30 PM'];
+  const validSlots = Array.isArray(rawSlots)
+    ? rawSlots.map(s => (typeof s === 'string' ? s.trim() : '')).filter(Boolean)
+    : [];
   
   const pdf = new jsPDF({
     orientation: 'portrait',
@@ -242,77 +248,92 @@ export const generateHallTicket = async (students, options = {}) => {
     y += 6.5;
 
     // --- Examination Slots & Timing Change Notice ---
-    drawMixedInstruction(y, [
-      { text: "Three examination slots are available:", bold: false }
-    ]);
-    y += 5.2;
+    if (validSlots.length > 0) {
+      const slotParts = [
+        { text: "The available examination slots are : ", bold: false }
+      ];
+      validSlots.forEach((slot, idx) => {
+        if (idx > 0) {
+          slotParts.push({ text: "   |   ", bold: false, color: [140, 140, 140] });
+        }
+        slotParts.push({ text: slot, bold: true, color: [PRIMARY_R, PRIMARY_G, PRIMARY_B] });
+      });
 
-    // Timeslots in bold
-    let slotX = MARGIN + 14;
-    pdf.setFont("helvetica", "bold");
-    pdf.setTextColor(PRIMARY_R, PRIMARY_G, PRIMARY_B);
-    pdf.text("9:00 AM", slotX, y);
-    slotX += pdf.getTextWidth("9:00 AM");
+      // Check if slotParts fit on one line or need splitting
+      pdf.setFontSize(9.2);
+      let totalSlotWidth = 0;
+      slotParts.forEach(p => {
+        pdf.setFont("helvetica", p.bold ? "bold" : (p.italic ? "italic" : "normal"));
+        totalSlotWidth += pdf.getTextWidth(p.text);
+      });
 
-    pdf.setFont("helvetica", "normal");
-    pdf.setTextColor(140, 140, 140);
-    pdf.text("   |   ", slotX, y);
-    slotX += pdf.getTextWidth("   |   ");
+      const maxLineW = CONTENT_W - 14;
+      if (totalSlotWidth <= maxLineW) {
+        drawMixedInstruction(y, slotParts);
+        y += 5.8;
+      } else {
+        drawMixedInstruction(y, [
+          { text: "The available examination slots are : ", bold: false }
+        ]);
+        y += 5.0;
+        let slotX = MARGIN + 14;
+        validSlots.forEach((slot, idx) => {
+          if (idx > 0) {
+            pdf.setFont("helvetica", "normal");
+            pdf.setTextColor(140, 140, 140);
+            pdf.text("   |   ", slotX, y);
+            slotX += pdf.getTextWidth("   |   ");
+          }
+          pdf.setFont("helvetica", "bold");
+          pdf.setTextColor(PRIMARY_R, PRIMARY_G, PRIMARY_B);
+          pdf.text(slot, slotX, y);
+          slotX += pdf.getTextWidth(slot);
+        });
+        y += 5.8;
+      }
 
-    pdf.setFont("helvetica", "bold");
-    pdf.setTextColor(PRIMARY_R, PRIMARY_G, PRIMARY_B);
-    pdf.text("11:30 AM", slotX, y);
-    slotX += pdf.getTextWidth("11:30 AM");
+      // Timing change notice
+      pdf.setFillColor(100, 100, 100);
+      pdf.circle(MARGIN + 9, y - 1.2, 0.48, 'F');
+      pdf.setFont("helvetica", "normal");
+      pdf.setTextColor(74, 74, 74);
+      const slotNotice = "If the examination timing mentioned in this Hall Ticket is not convenient, you may request a change to any of the above available slots.";
+      const slotNoticeLines = pdf.splitTextToSize(slotNotice, CONTENT_W - 18);
+      pdf.text(slotNoticeLines, MARGIN + 12, y);
+      y += slotNoticeLines.length * 4.6 + 2.0;
 
-    pdf.setFont("helvetica", "normal");
-    pdf.setTextColor(140, 140, 140);
-    pdf.text("   |   ", slotX, y);
-    slotX += pdf.getTextWidth("   |   ");
+      // To request a change:
+      drawMixedInstruction(y, [
+        { text: "To request a change:", bold: true }
+      ]);
+      y += 5.0;
 
-    pdf.setFont("helvetica", "bold");
-    pdf.setTextColor(PRIMARY_R, PRIMARY_G, PRIMARY_B);
-    pdf.text("2:30 PM", slotX, y);
-    y += 6.0;
+      pdf.setFont("helvetica", "normal");
+      pdf.setTextColor(74, 74, 74);
+      const reqNotice = "Send a WhatsApp message to any of the numbers mentioned below, in the following format:";
+      const reqNoticeLines = pdf.splitTextToSize(reqNotice, CONTENT_W - 20);
+      pdf.text(reqNoticeLines, MARGIN + 14, y);
+      y += reqNoticeLines.length * 4.6 + 2.0;
 
-    // Timing change notice
-    pdf.setFillColor(100, 100, 100);
-    pdf.circle(MARGIN + 9, y - 1.2, 0.48, 'F');
-    pdf.setFont("helvetica", "normal");
-    pdf.setTextColor(74, 74, 74);
-    const slotNotice = "If the examination timing mentioned in this Hall Ticket is not convenient, you may request a change to any of the above available slots.";
-    const slotNoticeLines = pdf.splitTextToSize(slotNotice, CONTENT_W - 18);
-    pdf.text(slotNoticeLines, MARGIN + 12, y);
-    y += slotNoticeLines.length * 4.6 + 2.0;
+      // Format line
+      pdf.setFont("helvetica", "bold");
+      pdf.setTextColor(PRIMARY_R, PRIMARY_G, PRIMARY_B);
+      pdf.text("<Name of Child> – Change timing from <Current Time> to <Required Time>", MARGIN + 14, y);
+      y += 5.5;
 
-    // To request a change:
-    drawMixedInstruction(y, [
-      { text: "To request a change:", bold: true }
-    ]);
-    y += 5.0;
+      // Example
+      pdf.setFont("helvetica", "bold");
+      pdf.setTextColor(74, 74, 74);
+      pdf.text("Example:", MARGIN + 14, y);
+      y += 4.8;
 
-    pdf.setFont("helvetica", "normal");
-    pdf.setTextColor(74, 74, 74);
-    const reqNotice = "Send a WhatsApp message to any of the numbers mentioned below, in the following format:";
-    const reqNoticeLines = pdf.splitTextToSize(reqNotice, CONTENT_W - 20);
-    pdf.text(reqNoticeLines, MARGIN + 14, y);
-    y += reqNoticeLines.length * 4.6 + 2.0;
-
-    // Format line
-    pdf.setFont("helvetica", "bold");
-    pdf.setTextColor(PRIMARY_R, PRIMARY_G, PRIMARY_B);
-    pdf.text("<Name of Child> – Change timing from <Current Time> to <Required Time>", MARGIN + 14, y);
-    y += 5.5;
-
-    // Example
-    pdf.setFont("helvetica", "bold");
-    pdf.setTextColor(74, 74, 74);
-    pdf.text("Example:", MARGIN + 14, y);
-    y += 4.8;
-
-    pdf.setFont("helvetica", "normal");
-    pdf.setTextColor(51, 51, 51);
-    pdf.text("Ananya – Change timing from 11:30 AM to 2:30 PM", MARGIN + 14, y);
-    y += 5.5;
+      pdf.setFont("helvetica", "normal");
+      pdf.setTextColor(51, 51, 51);
+      const egFrom = validSlots.length > 1 ? validSlots[1] : (validSlots[0] || "11:30 AM");
+      const egTo = validSlots.length > 2 ? validSlots[2] : (validSlots[1] || "2:30 PM");
+      pdf.text(`Ananya – Change timing from ${egFrom} to ${egTo}`, MARGIN + 14, y);
+      y += 5.5;
+    }
 
     // Force banner to dock near the bottom border with comfortable breathing room
     const bannerY = Math.max(y + 6, HEIGHT - MARGIN - 18);
@@ -334,6 +355,10 @@ export const generateHallTicket = async (students, options = {}) => {
   }
   
   if (signal?.aborted) throw new Error('Generation cancelled');
+
+  if (options.returnDoc) {
+    return pdf;
+  }
 
   const fileName = students.length === 1 
     ? `HallTicket_${students[0].name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`
