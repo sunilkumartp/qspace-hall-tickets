@@ -1,5 +1,95 @@
 import { jsPDF } from 'jspdf';
 
+/**
+ * Parses time strings (e.g. "9:00 AM", "11:30 AM", "2:30 PM", "9.30 am", "14:30")
+ * into minutes from midnight for chronological comparison.
+ */
+export const parseTimeToMinutes = (timeStr) => {
+  if (!timeStr || typeof timeStr !== 'string') return null;
+  const str = timeStr.trim().toLowerCase();
+
+  const match = str.match(/^(\d{1,2})(?:[:.](\d{2}))?\s*(am|pm)?$/i);
+  if (!match) return null;
+
+  let hours = parseInt(match[1], 10);
+  const minutes = match[2] ? parseInt(match[2], 10) : 0;
+  const meridiem = match[3] ? match[3].toLowerCase() : null;
+
+  if (meridiem === 'pm') {
+    if (hours < 12) hours += 12;
+  } else if (meridiem === 'am') {
+    if (hours === 12) hours = 0;
+  }
+
+  return hours * 60 + minutes;
+};
+
+/**
+ * Derives example 'from' and 'to' slots matching the custom examination timeslots,
+ * ensuring that 'to' time is strictly greater (later in the day) than 'from' time.
+ */
+export const getExampleTimingSlots = (validSlots) => {
+  if (!validSlots || validSlots.length === 0) {
+    return { egFrom: '11:30 AM', egTo: '2:30 PM' };
+  }
+
+  const parsedSlots = validSlots
+    .map((slot, index) => ({
+      slot: String(slot).trim(),
+      index,
+      minutes: parseTimeToMinutes(slot)
+    }))
+    .filter(s => Boolean(s.slot));
+
+  if (parsedSlots.length === 0) {
+    return { egFrom: '11:30 AM', egTo: '2:30 PM' };
+  }
+
+  // Sort ascending by time in minutes (if parseable), preserving relative order otherwise
+  const sorted = [...parsedSlots].sort((a, b) => {
+    if (a.minutes !== null && b.minutes !== null) {
+      return a.minutes - b.minutes;
+    }
+    if (a.minutes !== null) return -1;
+    if (b.minutes !== null) return 1;
+    return a.index - b.index;
+  });
+
+  if (sorted.length === 1) {
+    return { egFrom: sorted[0].slot, egTo: sorted[0].slot };
+  }
+
+  // If there are 3 or more slots, prefer index 1 and index 2 (e.g. 11:30 AM to 2:30 PM)
+  // as long as sorted[2] > sorted[1]
+  if (sorted.length >= 3) {
+    const slotFrom = sorted[1];
+    const slotTo = sorted[2];
+    if (
+      slotFrom.minutes !== null &&
+      slotTo.minutes !== null &&
+      slotTo.minutes > slotFrom.minutes
+    ) {
+      return { egFrom: slotFrom.slot, egTo: slotTo.slot };
+    }
+  }
+
+  // Find the first pair (i, j) where j > i and sorted[j].minutes > sorted[i].minutes
+  for (let i = 0; i < sorted.length - 1; i++) {
+    for (let j = i + 1; j < sorted.length; j++) {
+      if (
+        sorted[i].minutes !== null &&
+        sorted[j].minutes !== null &&
+        sorted[j].minutes > sorted[i].minutes
+      ) {
+        return { egFrom: sorted[i].slot, egTo: sorted[j].slot };
+      }
+    }
+  }
+
+  // Fallback: take first and second slots if times cannot be parsed
+  return { egFrom: sorted[0].slot, egTo: sorted[1].slot };
+};
+
 export const generateHallTicket = async (students, options = {}) => {
   const { onProgress, signal, slots } = options;
   
@@ -37,6 +127,14 @@ export const generateHallTicket = async (students, options = {}) => {
     if (i > 0) pdf.addPage();
 
     const student = students[i];
+
+    // Support per-student custom slots if present, or fallback to batch slots
+    const studentRawSlots = student.slots !== undefined 
+      ? student.slots 
+      : (student.examinationSlots !== undefined ? student.examinationSlots : rawSlots);
+    const currentSlots = Array.isArray(studentRawSlots)
+      ? studentRawSlots.map(s => (typeof s === 'string' ? s.trim() : '')).filter(Boolean)
+      : [];
 
     // --- Outer border ---
     pdf.setDrawColor(PRIMARY_R, PRIMARY_G, PRIMARY_B);
@@ -248,11 +346,11 @@ export const generateHallTicket = async (students, options = {}) => {
     y += 6.5;
 
     // --- Examination Slots & Timing Change Notice ---
-    if (validSlots.length > 0) {
+    if (currentSlots.length > 0) {
       const slotParts = [
         { text: "The available examination slots are : ", bold: false }
       ];
-      validSlots.forEach((slot, idx) => {
+      currentSlots.forEach((slot, idx) => {
         if (idx > 0) {
           slotParts.push({ text: "   |   ", bold: false, color: [140, 140, 140] });
         }
@@ -277,7 +375,7 @@ export const generateHallTicket = async (students, options = {}) => {
         ]);
         y += 5.0;
         let slotX = MARGIN + 14;
-        validSlots.forEach((slot, idx) => {
+        currentSlots.forEach((slot, idx) => {
           if (idx > 0) {
             pdf.setFont("helvetica", "normal");
             pdf.setTextColor(140, 140, 140);
@@ -329,7 +427,8 @@ export const generateHallTicket = async (students, options = {}) => {
 
       pdf.setFont("helvetica", "normal");
       pdf.setTextColor(51, 51, 51);
-      pdf.text("Ananya – Change timing from 11:30 AM to 2:30 PM", MARGIN + 14, y);
+      const { egFrom, egTo } = getExampleTimingSlots(currentSlots);
+      pdf.text(`Ananya – Change timing from ${egFrom} to ${egTo}`, MARGIN + 14, y);
       y += 5.5;
     }
 

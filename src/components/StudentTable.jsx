@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Check, Trash2, Clock, Printer, Edit2, X, Plus } from 'lucide-react';
 import { db } from '../db/database';
-import { generateHallTicket } from '../utils/pdfGenerator';
+import { generateHallTicket, getExampleTimingSlots } from '../utils/pdfGenerator';
 import { generateWorkshopSlip } from '../utils/workshopPdfGenerator';
 import { logGeneration } from '../utils/analytics';
 import { format } from 'date-fns';
@@ -475,14 +475,20 @@ export const StudentTable = ({ mode, year, onBack }) => {
                     {activeValidSlots.length > 0 ? 'Hall Ticket Preview:' : 'Note:'}
                   </strong>
                   {activeValidSlots.length > 0 ? (
-                    <span>
-                      The available examination slots are : {activeValidSlots.map((s, idx) => (
-                        <React.Fragment key={idx}>
-                          {idx > 0 && <span style={{ color: '#94a3b8', margin: '0 6px' }}>|</span>}
-                          <strong style={{ color: 'var(--primary)' }}>{s}</strong>
-                        </React.Fragment>
-                      ))}
-                    </span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                      <div>
+                        The available examination slots are : {activeValidSlots.map((s, idx) => (
+                          <React.Fragment key={idx}>
+                            {idx > 0 && <span style={{ color: '#94a3b8', margin: '0 6px' }}>|</span>}
+                            <strong style={{ color: 'var(--primary)' }}>{s}</strong>
+                          </React.Fragment>
+                        ))}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#334155' }}>
+                        <span>Example on Hall Ticket: </span>
+                        <span>Ananya – Change timing from <strong>{getExampleTimingSlots(activeValidSlots).egFrom}</strong> to <strong>{getExampleTimingSlots(activeValidSlots).egTo}</strong></span>
+                      </div>
+                    </div>
                   ) : (
                     <span>No values are entered. The entire examination slots and timing change request text will be skipped from printing.</span>
                   )}
